@@ -16,4 +16,4 @@ Below is a picture of the system outline. The red box indicates the initial prot
 
 Below is a diagram of the backend of our system. The project's main compoents include a ESP32 microcontrollers and a raspberry pi. The raspberry pi will host a number of scripts including the MQTT broker, the database, and the API to request the sensor data.
 
-![Backround](./Images/BackendStructure.jpg)
+![Backround](./Images/BackendStructure.JPG)
