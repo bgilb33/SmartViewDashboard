@@ -14,7 +14,7 @@ let sensorData = LabData.dataArray;
 // Global
 
 
-const { getXDataPoints, findLab } = require('./appModules'); // Replace './yourModule' with the correct path to your module file
+const { getXDataPoints, getMostRecentData, findLab } = require('./appModules'); // Replace './yourModule' with the correct path to your module file
 
 // Middleware for logging and parsing JSON in the request body
 app.use(express.json());
@@ -94,14 +94,19 @@ app.post('/nialab/SetVisibility', (req, res) => {
     }
   });
 
+
+app.get('/nialab/GetHomePageData', (req, res) => {
+  res.send(getMostRecentData());
+});
+
 ///////////////////////
 // Sensor Page endpoints
 ///////////////////////
 
 // for an input X and the device ID return the last x tempature and humidity sensor.
 app.get('/nialab/getPoints', (req, res) => {
-  const deviceID = req.query.DeviceID;
-  const NumPoints = parseInt(req.query.NumPoints);
+  const deviceID = req.query.deviceID;
+  const NumPoints = parseInt(req.query.numPoints);
 
   const dataPoints = getXDataPoints(deviceID, NumPoints);
 

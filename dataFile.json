@@ -4,48 +4,49 @@
       "DeviceID": "device1",
       "AlarmID": "alarm1",
       "SensorType": "Temperature",
-      "Threshold": 30
-    },
-    {
-      "DeviceID": "device2",
-      "AlarmID": "alarm2",
-      "SensorType": "Humidity",
-      "Threshold": 60
-    },
-    {
-      "DeviceID": "device3",
-      "AlarmID": "alarm3",
-      "SensorType": "Pressure",
-      "Threshold": 1000
+      "Threshold": 30,
+      "Compare": ">"
     }
   ],
   "dataArray": [
     {
       "DeviceID": "someID2",
+      "DeviceName": "default",
       "Time": 1701783780,
       "Temperature": 27,
       "Humidity": 55
     },
     {
-      "DeviceID": "someID2",
+      "DeviceID": "someID1",
+      "DeviceName": "room2",
       "Time": 1701783781,
       "Temperature": 27,
       "Humidity": 55
     },
     {
-      "DeviceID": "someID2",
+      "DeviceID": "someID1",
+      "DeviceName": "room2",
       "Time": 1701783782,
       "Temperature": 27,
       "Humidity": 55
     },
     {
       "DeviceID": "someID2",
+      "DeviceName": "default",
       "Time": 1701783783,
       "Temperature": 27,
       "Humidity": 55
     },
     {
       "DeviceID": "someID2",
+      "DeviceName": "default",
+      "Time": 1701783784,
+      "Temperature": 27,
+      "Humidity": 55
+    },
+    {
+      "DeviceID": "someID3",
+      "DeviceName": "room 3",
       "Time": 1701783784,
       "Temperature": 27,
       "Humidity": 55

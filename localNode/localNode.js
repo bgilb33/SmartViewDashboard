@@ -7,7 +7,6 @@ const options = { clientId: 'mqtt-receiver'};
 
 const device1Topic = 'init';
 const device2Topic = 'data';
-const device3Topic = 'configure';
 
 // Data Packet Structure
 
@@ -22,7 +21,7 @@ const device3Topic = 'configure';
 
 // Data Communication:
 // Client -> Broker
-// data: Data <deviceID> <temp> <humidity> <time>
+// data: Data <deviceID> <deviceName> <temp> <humidity> <time>
 
 // Configure Communication:
 // Broker -> Client
@@ -62,11 +61,6 @@ client.on('message', (topic, message) => {
         testAddData();
         break;
 
-    // configure topic
-    case device3Topic:
-      console.log("we are going to configure data")
-      break;
-  
     default:
         console.log("I am not sure what this message is...")
         break;

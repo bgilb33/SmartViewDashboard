@@ -36,9 +36,10 @@ function getDeviceById(deviceId, IPAddress, MacAddress) {
   }
 }
 
-function addDataPointToArray(deviceID, time, temperature, humidity) {
+function addDataPointToArray(deviceID, name, time, temperature, humidity) {
     const newDataEntry = {
       "DeviceID": deviceID,
+      "DeviceName": deviceName,
       "Time": time,
       "Temperature": temperature,
       "Humidity": humidity,
@@ -82,11 +83,12 @@ function testGetDevice(){
 
 function testAddData(){
   const newDeviceID = "someID2";
+  const netName = "default";
   const newTime = 1701783788;
   const newTemperature = 27;
   const newHumidity = 55;
 
-  addDataPointToArray(newDeviceID, newTime, newTemperature, newHumidity);
+  addDataPointToArray(newDeviceID, netName ,newTime, newTemperature, newHumidity);
 }
 
 module.exports = { testAddData, testGetDevice, getDeviceById, addDataPointToArray};

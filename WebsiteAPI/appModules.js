@@ -58,4 +58,22 @@ function getXDataPoints(deviceID, x) {
   return result;
 }
 
-module.exports = { writeData, findLab, getXDataPoints};
+
+function getMostRecentData() {
+  const mostRecentData = {};
+  sensorData.forEach(data => {
+    const deviceId = data.DeviceID;
+    if (!mostRecentData[deviceId] || data.Time > mostRecentData[deviceId].Time) {
+      // If not present or if the current data's time is greater, update the mostRecentData
+      mostRecentData[deviceId] = data;
+    }
+  });
+
+  const resultArray = Object.values(mostRecentData);
+
+  return resultArray;
+}
+
+module.exports = { writeData, findLab, getXDataPoints, getMostRecentData};
+
+
