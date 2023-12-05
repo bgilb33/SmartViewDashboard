@@ -27,7 +27,7 @@ function promptUser() {
       rl.close();
     } else {
       // Publish the user's message to a topic
-      const publishTopic = 'init';
+      const publishTopic = 'data';
       client.publish(publishTopic, message, (err) => {
         if (!err) {
           console.log(`Published message to ${publishTopic}: ${message}`);

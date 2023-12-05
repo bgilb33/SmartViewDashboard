@@ -1,4 +1,4 @@
-const { getDeviceById, addDataToDeviceArray } = require('./QueryModules'); // Replace './yourModule' with the correct path to your module file
+const { testAddData, testGetDevice } = require('./localModules'); // Replace './yourModule' with the correct path to your module file
 const mqtt = require('mqtt');
 
 // MQTT broker connection options
@@ -44,29 +44,28 @@ client.on('connect', () => {
   });
 });
 
-function subscribeToTopic(topic, callback) {
-  client.subscribe(topic, (err) => {
-    if (!err) {
-      console.log(`Subscribed to: ${topic}`);
-      callback(); // Invoke the callback once the subscription is complete
-    } else {
-      console.error(`Error subscribing to ${topic}: ${err}`);
-      callback(); // Invoke the callback even if there is an error
-    }
-  });
-}
-
 
 // Handle incoming messages
 client.on('message', (topic, message) => {
   console.log(`Received message on topic: ${topic} / ${message.toString()}`);
   switch (topic) {
+
+    // init topic
     case device1Topic:
-        console.log("we have a new device... maybe?")
+        const message = testGetDevice();
+        console.log(message);
         break;
+
+    // data topic
     case device2Topic:
         console.log("now we have data")
+        testAddData();
         break;
+
+    // configure topic
+    case device3Topic:
+      console.log("we are going to configure data")
+      break;
   
     default:
         console.log("I am not sure what this message is...")
@@ -83,3 +82,15 @@ client.on('error', (error) => {
 client.on('close', () => {
   console.log('Connection closed');
 });
+
+function subscribeToTopic(topic, callback) {
+  client.subscribe(topic, (err) => {
+    if (!err) {
+      console.log(`Subscribed to: ${topic}`);
+      callback(); // Invoke the callback once the subscription is complete
+    } else {
+      console.error(`Error subscribing to ${topic}: ${err}`);
+      callback(); // Invoke the callback even if there is an error
+    }
+  });
+}

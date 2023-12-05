@@ -36,7 +36,7 @@ function getDeviceById(deviceId, IPAddress, MacAddress) {
   }
 }
 
-function addDataToDeviceArray(deviceID, time, temperature, humidity) {
+function addDataPointToArray(deviceID, time, temperature, humidity) {
     const newDataEntry = {
       "DeviceID": deviceID,
       "Time": time,
@@ -49,6 +49,8 @@ function addDataToDeviceArray(deviceID, time, temperature, humidity) {
     writeDataToFile();
 }
 
+
+// maybe update this in the furture...
 function writeDataToFile() {
     const updatedData = {
       ...LabData,
@@ -67,24 +69,29 @@ function writeDataToFile() {
   fs.writeFileSync(devicesFilePath, JSON.stringify(updatedData, null, 2));
 }
 
-function getXDataPoints(deviceID, x) {
-    // Filter data by the provided device ID
-    const filteredData = sensorData.filter(entry => entry.DeviceID === deviceID);
-  
-    // Sort the filtered data by Time in descending order
-    const sortedData = filteredData.sort((a, b) => b.Time - a.Time);
-    const result = sortedData.slice(0, x);
-  
-    return result;
-  }
 
-// Example usage1:
-// const deviceIdToSearch = -1;
-// const MacAddressToSearch = "FF:FF:FF:FF:FF:FF";
-// const IPAddressToSearch = "120.0.0.1";
+function testGetDevice(){
+  const deviceIdToSearch = 3;
+  const MacAddressToSearch = "FF:FF:FF:FF:FF:FF";
+  const IPAddressToSearch = "120.0.0.1";
 
-// const foundDevice = getDeviceById(deviceIdToSearch, MacAddressToSearch, IPAddressToSearch);
-// console.log(foundDevice);
+  const response = getDeviceById(deviceIdToSearch, MacAddressToSearch, IPAddressToSearch);
+  // console.log(response);
+  return response;
+}
+
+function testAddData(){
+  const newDeviceID = "someID2";
+  const newTime = 1701783788;
+  const newTemperature = 27;
+  const newHumidity = 55;
+
+  addDataPointToArray(newDeviceID, newTime, newTemperature, newHumidity);
+}
+
+module.exports = { testAddData, testGetDevice, getDeviceById, addDataPointToArray};
+
+// Testing Code
 
 // Example usage2:
 // const newDeviceID = "someID2";
@@ -93,11 +100,3 @@ function getXDataPoints(deviceID, x) {
 // const newHumidity = 55;
 
 // addDataToDeviceArray(newDeviceID, newTime, newTemperature, newHumidity);
-
-// Example 3
-const deviceIDToSearch = "someID2";
-const numberOfResults = 3;
-
-const dataPoints = getXDataPoints(deviceIDToSearch, numberOfResults);
-
-console.log("Most recent lowest data points:", dataPoints);

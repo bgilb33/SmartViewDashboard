@@ -22,13 +22,31 @@
   "dataArray": [
     {
       "DeviceID": "someID2",
-      "Time": 1701783788,
+      "Time": 1701783780,
       "Temperature": 27,
       "Humidity": 55
     },
     {
       "DeviceID": "someID2",
-      "Time": 1701783788,
+      "Time": 1701783781,
+      "Temperature": 27,
+      "Humidity": 55
+    },
+    {
+      "DeviceID": "someID2",
+      "Time": 1701783782,
+      "Temperature": 27,
+      "Humidity": 55
+    },
+    {
+      "DeviceID": "someID2",
+      "Time": 1701783783,
+      "Temperature": 27,
+      "Humidity": 55
+    },
+    {
+      "DeviceID": "someID2",
+      "Time": 1701783784,
       "Temperature": 27,
       "Humidity": 55
     }
@@ -89,6 +107,51 @@
     },
     {
       "DeviceID": 5,
+      "DeviceName": "Default Device",
+      "IPAddress": "FF:FF:FF:FF:FF:FF",
+      "Frequency": 60,
+      "Units": "minute",
+      "MacAddress": "120.0.0.1",
+      "Visibility": true
+    },
+    {
+      "DeviceID": 6,
+      "DeviceName": "Default Device",
+      "IPAddress": "FF:FF:FF:FF:FF:FF",
+      "Frequency": 60,
+      "Units": "minute",
+      "MacAddress": "120.0.0.1",
+      "Visibility": true
+    },
+    {
+      "DeviceID": 7,
+      "DeviceName": "Default Device",
+      "IPAddress": "FF:FF:FF:FF:FF:FF",
+      "Frequency": 60,
+      "Units": "minute",
+      "MacAddress": "120.0.0.1",
+      "Visibility": true
+    },
+    {
+      "DeviceID": 8,
+      "DeviceName": "Default Device",
+      "IPAddress": "FF:FF:FF:FF:FF:FF",
+      "Frequency": 60,
+      "Units": "minute",
+      "MacAddress": "120.0.0.1",
+      "Visibility": true
+    },
+    {
+      "DeviceID": 9,
+      "DeviceName": "Default Device",
+      "IPAddress": "FF:FF:FF:FF:FF:FF",
+      "Frequency": 60,
+      "Units": "minute",
+      "MacAddress": "120.0.0.1",
+      "Visibility": true
+    },
+    {
+      "DeviceID": 10,
       "DeviceName": "Default Device",
       "IPAddress": "FF:FF:FF:FF:FF:FF",
       "Frequency": 60,
