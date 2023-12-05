@@ -1,0 +1,10 @@
+{application,emqx_ldap,
+             [{description,"EMQX LDAP Connector"},
+              {vsn,"0.1.5"},
+              {registered,[]},
+              {applications,[kernel,stdlib,eldap,emqx_connector,
+                             emqx_resource]},
+              {env,[]},
+              {modules,[emqx_ldap,emqx_ldap_bind_worker,
+                        emqx_ldap_filter_lexer,emqx_ldap_filter_parser]},
+              {links,[]}]}.

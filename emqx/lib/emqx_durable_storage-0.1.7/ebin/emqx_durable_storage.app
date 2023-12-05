@@ -1,0 +1,13 @@
+{application,emqx_durable_storage,
+             [{description,"Message persistence and subscription replays for EMQX"},
+              {vsn,"0.1.7"},
+              {modules,[emqx_ds,emqx_ds_app,emqx_ds_bitmask_keymapper,
+                        emqx_ds_conf,emqx_ds_lts,emqx_ds_proto_v1,
+                        emqx_ds_replication_layer,
+                        emqx_ds_storage_bitfield_lts,emqx_ds_storage_layer,
+                        emqx_ds_storage_layer_sup,emqx_ds_storage_reference,
+                        emqx_ds_sup]},
+              {registered,[]},
+              {applications,[kernel,stdlib,rocksdb,gproc,mria,emqx_utils]},
+              {mod,{emqx_ds_app,[]}},
+              {env,[]}]}.
