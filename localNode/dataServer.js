@@ -6,8 +6,7 @@ const options = {
   clientId: 'mqtt-receiver',
 };
 
-const device1Topic = 'INIT/OUT';
-const device2Topic = 'DATA';
+const deviceTopic = 'DATA';
 
 // Connect to the MQTT broker
 const client = mqtt.connect(brokerUrl, options);
@@ -16,11 +15,8 @@ client.on('connect', () => {
   console.log("//////////////////////////////////////")
   console.log('LabSensor.us Data Subscriber Connected to MQTT broker');
 
-  subscribeToTopic(device1Topic, () => {
-    subscribeToTopic(device2Topic, () => {
-      // This block will be executed after both subscriptions are complete
+  subscribeToTopic(deviceTopic, () => {
       console.log("//////////////////////////////////////");
-    });
   });
 });
 
@@ -39,16 +35,14 @@ function subscribeToTopic(topic, callback) {
 // Handle incoming messages
 client.on('message', (topic, message) => {
   console.log(`Received message on topic: ${topic} / ${message.toString()}`);
-  switch (topic) {
-    case device1Topic:
-        break;
-    case device2Topic:
-        break;
+  if(topic == deviceTopic)
   
-    default:
-        console.log("error unknown topic")
-        break;
-  }
+    // console.log("Packet Recieved Insert Into Database");
+    var result = parseString(message.toString());
+
+
+    // Call benji function with arguments: DeviceID, tempature, hummidity;
+    insertIntoDatabase(result[0], result[1], result[2]); 
 });
 
 // Handle error event
@@ -61,3 +55,23 @@ client.on('close', () => {
   console.log('Connection closed');
 });
 
+function insertIntoDatabase(deviceID, tempature, hummidity){
+  console.log("------");
+  console.log("Data:");
+  console.log(deviceID);
+  console.log(tempature);
+  console.log(hummidity);
+  console.log("------");
+}
+
+function parseString(inputString) {
+  // Split the input string into an array of words
+  const words = inputString.split(' ');
+  // Extract numerical values from the words and convert them to floating-point numbers
+  const values = words.map(word => parseFloat(word));
+
+  // Filter out NaN values (non-numeric words)
+  const numericValues = values.filter(value => !isNaN(value));
+
+  return numericValues;
+}

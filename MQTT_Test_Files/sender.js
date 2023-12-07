@@ -1,8 +1,12 @@
 const mqtt = require('mqtt');
 const readline = require('readline');
 
+// Message Context
+// topic: INIT/IN SETUP 0C:DC:7E:CB:6C:D0 68 10 MINUTE
+
+
 // MQTT broker connection options
-const brokerUrl = 'mqtt://10.239.139.240'; // Replace with your broker URL
+const brokerUrl = 'mqtt://192.168.1.7'; // Replace with your broker URL
 const options = {
   clientId: 'mqtt-sender',
 };
@@ -27,7 +31,7 @@ function promptUser() {
       rl.close();
     } else {
       // Publish the user's message to a topic
-      const publishTopic = 'data';
+      const publishTopic = 'INIT/IN';
       client.publish(publishTopic, message, (err) => {
         if (!err) {
           console.log(`Published message to ${publishTopic}: ${message}`);
