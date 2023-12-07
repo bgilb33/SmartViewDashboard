@@ -2,10 +2,21 @@ const express = require('express');
 const app = express();
 const port = 3004;
 const { connectToDatabase, initializeLabs, login, getCollection, insertTestData, getAllConfig, editDeviceConfig, getAllAlarms, removeDevice, getAllHomePageData, addAlarm, editAlarm, removeAlarm } = require('./db');
+const cors = require('cors');
 
 let database; // Define the database variable
 
-app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204,
+  allowedHeaders: 'Content-Type, Authorization, access-control-allow-methods',
+}));
+
+app.use(express.json()); 
+
+
 
 app.get('/', (req, res) => {
   res.send('LabSensors API is Active');
@@ -22,14 +33,14 @@ app.get('/login', async (req, res) => {
       return res.status(500).json({ error: 'Internal server error' });
     }
 
-    login(db, nameOfLab, passwordOfLab, (loginErr, success) => {
+    login(db, nameOfLab, passwordOfLab, (loginErr, lab) => {
       if (loginErr) {
         console.error(loginErr);
         return res.status(500).json({ error: 'Internal server error' });
       }
-
-      if (success) {
-        res.json({ success: true, message: 'Login successful' });
+      console.log("Lab", lab);
+      if (lab.success) {
+        res.json({ success: true, api: lab.api, message: 'Login successful' });
       } else {
         return res.status(401).json({ success: false, message: 'Login failed' });
       }

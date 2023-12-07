@@ -1,9 +1,6 @@
 {"k":"0000000078","o":"0000000118","v":"001"}
-{"_id":2,"_uid":2,"_dt":1701902739863,"_s":"2f2bb78caead0fd756f0a83fe66fa85f"}
+{"_id":2,"_uid":2,"_dt":1701976097247,"_s":"2f2bb78caead0fd756f0a83fe66fa85f"}
 {"DeviceID":1,"DeviceName":"Lab Room 1","Time":1701783780,"Temperature":27,"Humidity":55,"_id":{"$wrap":"$oid","v":2}}
 {"k":"0000000078","o":"0000000120","v":"001"}
-{"_id":3,"_uid":3,"_dt":1701902739865,"_s":"77549e1bb71e463f92f6088b5ecbc1d6"}
+{"_id":3,"_uid":3,"_dt":1701976097249,"_s":"77549e1bb71e463f92f6088b5ecbc1d6"}
 {"DeviceID":2,"DeviceName":"Snack Room 1","Time":1701783780,"Temperature":17,"Humidity":44,"_id":{"$wrap":"$oid","v":3}}
-{"k":"0000000049","o":"0000000000","v":"001"}
-{"_id":3,"_uid":3,"_dt":1701903280672,"_a":"del"}
-

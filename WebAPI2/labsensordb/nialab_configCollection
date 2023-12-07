@@ -1,12 +1,6 @@
 {"k":"0000000078","o":"0000000098","v":"001"}
-{"_id":2,"_uid":2,"_dt":1701902739873,"_s":"9b9c7b678b2604dd31d64728c0215d4f"}
+{"_id":2,"_uid":2,"_dt":1701976097256,"_s":"9b9c7b678b2604dd31d64728c0215d4f"}
 {"DeviceID":1,"DeviceName":"Lab Room 1","Frequency":7,"Units":"Hour","_id":{"$wrap":"$oid","v":2}}
 {"k":"0000000078","o":"0000000103","v":"001"}
-{"_id":3,"_uid":3,"_dt":1701902739873,"_s":"70a999abb2b3f7ec69542ff293c9140e"}
+{"_id":3,"_uid":3,"_dt":1701976097258,"_s":"70a999abb2b3f7ec69542ff293c9140e"}
 {"DeviceID":2,"DeviceName":"Snack Room 1","Frequency":12,"Units":"Minute","_id":{"$wrap":"$oid","v":3}}
-{"k":"0000000078","o":"0000000106","v":"001"}
-{"_id":2,"_uid":3,"_dt":1701903129238,"_s":"bbfcf013ee568d025faa0666cd098cc6"}
-{"DeviceID":1,"DeviceName":"Updated Lab Room 1","Frequency":8,"Units":"Hour","_id":{"$wrap":"$oid","v":2}}
-{"k":"0000000049","o":"0000000000","v":"001"}
-{"_id":3,"_uid":3,"_dt":1701903280675,"_a":"del"}
-

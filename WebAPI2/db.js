@@ -57,21 +57,22 @@ const initializeLabs = (db, callback) => {
 const login = (db, username, password, callback) => {
   const labCollection = getCollection(db, 'labCollection');
 
-  labCollection.findOne({ name: username, password: password }, (err, user) => {
+  labCollection.findOne({ name: username, password: password }, (err, lab) => {
     if (err) {
       console.error(err);
       callback(err);
     }
 
-    if (user) {
-      // User found, login successful
-      callback(null, true);
+    if (lab) {
+      // Include the 'api' property in the callback
+      callback(null, { success: true, api: lab.api, message: 'Login successful' });
     } else {
       // User not found, login failed
-      callback(null, false);
+      callback(null, { success: false, message: 'Login failed' });
     }
   });
 };
+
 
 const insertTestData = (db, callback) => {
   // Insert test data for each lab
