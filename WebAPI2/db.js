@@ -1,29 +1,28 @@
-const tingodb = require('tingodb')();
+const { MongoClient } = require('mongodb');
 
-const connectToDatabase = (callback) => {
-  const db = new tingodb.Db('./labsensordb', {});
-  db.open((err) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    } else {
-      callback(null, db);
-    }
-  });
+const connectToDatabase = async (callback) => {
+  const uri = 'mongodb+srv://bgilb33:GbGb302302!@labsensordb.drzhafh.mongodb.net/?retryWrites=true&w=majority';
+  const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+  try {
+    await client.connect();
+    const db = client.db(); // Get the database from the connection
+    callback(null, db);
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
 };
 
 const getCollection = (db, collectionName) => {
   return db.collection(collectionName);
 };
 
-const initializeLabs = (db, callback) => {
+const initializeLabs = async (db, callback) => {
   const labCollection = getCollection(db, 'labCollection');
 
-  labCollection.count({}, (err, count) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    }
+  try {
+    const count = await labCollection.countDocuments();
 
     if (count === 0) {
       const labs = [
@@ -41,365 +40,306 @@ const initializeLabs = (db, callback) => {
         }
       ];
 
-      labCollection.insert(labs, (insertErr, result) => {
-        if (insertErr) {
-          console.error(insertErr);
-          callback(insertErr);
-        }
-        callback(null, result);
-      });
+      const result = await labCollection.insertMany(labs);
+      callback(null, result);
     } else {
       callback(null, 'Collection is not empty');
     }
-  });
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
 };
 
-const login = (db, username, password, callback) => {
+const login = async (db, username, password, callback) => {
   const labCollection = getCollection(db, 'labCollection');
 
-  labCollection.findOne({ name: username, password: password }, (err, user) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    }
+  try {
+    const lab = await labCollection.findOne({ name: username, password: password });
 
-    if (user) {
-      // User found, login successful
-      callback(null, true);
+    if (lab) {
+      callback(null, { success: true, api: lab.api, message: 'Login successful' });
     } else {
-      // User not found, login failed
-      callback(null, false);
+      callback(null, { success: false, message: 'Login failed' });
     }
-  });
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
 };
 
-const insertTestData = (db, callback) => {
-  // Insert test data for each lab
-  const insertDataForLab = (labApi, collectionName, data, configData, alarmData) => {
-    const dataCollection = getCollection(db, `${labApi}_dataCollection`);
-    const configCollection = getCollection(db, `${labApi}_configCollection`);
-    const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
-
-    dataCollection.count({}, (err, count) => {
-      if (err) {
-        console.error(err);
-        callback(err);
-      }
-
-      if (count === 0) {
-        dataCollection.insert(data, (dataInsertErr, dataInsertResult) => {
-          if (dataInsertErr) {
-            console.error(dataInsertErr);
-            callback(dataInsertErr);
-          }
-
-          // Insert corresponding config data for each device
-          configCollection.insert(configData, (configInsertErr, configInsertResult) => {
-            if (configInsertErr) {
-              console.error(configInsertErr);
-              callback(configInsertErr);
-            }
-
-            // Insert alarm data for each device
-            alarmCollection.insert(alarmData, (alarmInsertErr, alarmInsertResult) => {
-              if (alarmInsertErr) {
-                console.error(alarmInsertErr);
-                callback(alarmInsertErr);
-              }
-
-              callback(null, 'Test data insertion completed');
-            });
-          });
-        });
-      } else {
-        callback(null, `Collection ${collectionName} for ${labApi} is not empty`);
-      }
-    });
-  };
-
-  // Define test data for each lab
-  const testDataForLabs = {
-    nialab: [
-      {
-        "DeviceID": 1,
-        "DeviceName": "Lab Room 1",
-        "Time": 1701783780,
-        "Temperature": 27,
-        "Humidity": 55
-      },
-      {
-        "DeviceID": 2,
-        "DeviceName": "Snack Room 1",
-        "Time": 1701783780,
-        "Temperature": 17,
-        "Humidity": 44
-      },
-      // Add more data for nialab if needed
-    ],
-    littlelab: [
-      {
-        "DeviceID": 1,
-        "DeviceName": "Lab Room 2",
-        "Time": 1701783780,
-        "Temperature": 27,
-        "Humidity": 55
-      },
-      // Add more data for littlelab if needed
-    ],
-  };
-
-  // Define test config data for each lab
-  const testConfigDataForLabs = {
-    nialab: [
-      {
-        "DeviceID": 1,
-        "DeviceName": `Lab Room 1`,
-        "Frequency": 7,
-        "Units": 'Hour'
-      },
-      {
-        "DeviceID": 2,
-        "DeviceName": `Snack Room 1`,
-        "Frequency": 12,
-        "Units": 'Minute'
-      },
-      // Add more config data if needed
-    ],
-    littlelab: [
-      {
-        "DeviceID": 1,
-        "DeviceName": `Lab Room 2`,
-        "Frequency": 10,
-        "Units": 'Minute'
-      },
-      // Add more config data if needed
-    ],
-  };
-
-  // Define test alarm data for each lab
-  const testAlarmDataForLabs = {
-    nialab: [
-      {
-        "DeviceID": 1,
-        "AlarmID": 1,
-        "DeviceName": "Lab Room 1",
-        "SensorType": "Temperature",
-        "Threshold": 30,
-        "Compare": ">"
-      },
-      // Add more alarm data if needed
-    ],
-    littlelab: [
-      {
-        "DeviceID": 1,
-        "AlarmID": 1,
-        "DeviceName": "Lab Room 2",
-        "SensorType": "Humidity",
-        "Threshold": 40,
-        "Compare": "<"
-      },
-      // Add more alarm data if needed
-    ],
-  };
-
-  // Insert test data for each lab
-  Object.entries(testDataForLabs).forEach(([labApi, data]) => {
-    const configData = testConfigDataForLabs[labApi];
-    const alarmData = testAlarmDataForLabs[labApi];
-    insertDataForLab(labApi, 'dataCollection', data, configData, alarmData);
-  });
-
-  // Return a callback to indicate completion
-  callback(null, 'Test data insertion completed');
-};
-
-const getAllConfig = (db, labApi, callback) => {
+//Input Body: 
+// {
+//   MAC: "mac",
+//   IP: "ip",
+//   Time: 1387294820
+// }
+const addDevice = async (db, labApi, inputObject, callback) => {
   const configCollection = getCollection(db, `${labApi}_configCollection`);
-
-  configCollection.find({}).toArray((err, config) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    }
-
-    if (config.length === 0) {
-      callback(null, `Config not found or collection is empty for ${labApi}`);
-    } else {
-      callback(null, config);
-    }
-  });
-};
-
-const getAllHomePageData = (db, labApi, callback) => {
-  const configCollection = getCollection(db, `${labApi}_dataCollection`);
-
-  configCollection.find({}).toArray((err, config) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    }
-
-    if (config.length === 0) {
-      callback(null, `Config not found or collection is empty for ${labApi}`);
-    } else {
-      callback(null, config);
-    }
-  });
-};
-
-const getAllAlarms = (db, labApi, callback) => {
-  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
-
-  alarmCollection.find({}).toArray((err, alarmData) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    }
-
-    callback(null, alarmData);
-  });
-};
-
-const editDeviceConfig = (db, labApi, deviceConfig, callback) => {
-  const configCollection = getCollection(db, `${labApi}_configCollection`);
-
-  const { DeviceID } = deviceConfig;
-  
-  configCollection.update({ DeviceID }, { $set: deviceConfig }, (err, result) => {
-    if (err) {
-      console.error(err);
-      callback(err);
-    }
-
-    callback(null, result);
-  });
-};
-
-const removeDevice = (db, labApi, deviceID, callback) => {
   const dataCollection = getCollection(db, `${labApi}_dataCollection`);
-  const configCollection = getCollection(db, `${labApi}_configCollection`);
 
-  // Log the existing devices in dataCollection
-  dataCollection.find({}).toArray((findErr, devices) => {
-    if (findErr) {
-      console.error('Error finding devices in dataCollection:', findErr);
-      callback(findErr);
+  try {
+    // Check if a device with the same MAC address already exists
+    const existingDevice = await configCollection.findOne({ MAC: inputObject.MAC });
+
+    if (existingDevice) {
+      callback(null, { 
+        success: false, 
+        message: 'Device with the same MAC address already exists', 
+        DeviceID: existingDevice.DeviceID,
+        Frequency: existingDevice.Frequency,
+        Units: existingDevice.Units
+      });
       return;
     }
 
+    // Asynchronously get the count for the new DeviceID
+    const index = await dataCollection.countDocuments() + 1;
 
-    // Find the device based on DeviceID
-    dataCollection.findOne({ DeviceID: parseInt(deviceID) }, (findDeviceErr, device) => {      if (findDeviceErr) {
-        callback(findDeviceErr);
-        return;
-      }
+    const dataObject = {
+      "DeviceID": index,
+      "DeviceName": `Device ${index}`,
+      "Temperature": 0,
+      "Humidity": 0,
+      "Time": inputObject.Time
+    };
 
-      if (!device) {
-        callback(null, `Device with DeviceID ${deviceID} not found`);
-        return;
-      }
+    const configObject = {
+      "DeviceID": index,
+      "DeviceName": `Device ${index}`,
+      "Frequency": 10,
+      "Units": "Minute",
+      "MAC": inputObject.MAC,
+      "IP": inputObject.IP
+    };
 
-      const { _id } = device;
-      // Remove device from dataCollection using _id
-      dataCollection.remove({ _id: _id }, (dataRemoveErr, dataRemoveResult) => {
-        if (dataRemoveErr) {
-          callback(dataRemoveErr);
-          return;
-        }
+    // Use insertOne to get detailed result information
+    const dataResult = await dataCollection.insertOne(dataObject);
+    const configResult = await configCollection.insertOne(configObject);
 
-        // Remove device from configCollection using _id
-        configCollection.remove({ _id: _id }, (configRemoveErr, configRemoveResult) => {
-          if (configRemoveErr) {
-            callback(configRemoveErr);
-            return;
-          }
-
-          callback(null, `Device with DeviceID ${deviceID} removed from dataCollection and configCollection`);
-        });
+    // Check if both insertions are acknowledged
+    if (dataResult.acknowledged && configResult.acknowledged) {
+      callback(null, { 
+        success: true, 
+        message: `Device added with DeviceID ${index}`, 
+        DeviceID: index,
+        Frequency: 10,
+        Units: "Minute"
       });
-    });
-  });
+    } else {
+      // Provide more information in case of an issue
+      callback("Insertion not acknowledged", null);
+    }
+  } catch (err) {
+    console.log(err);
+    callback(err, null);
+  }
 };
 
-// Function to add an alarm to the alarmCollection
-const addAlarm = (db, labApi, alarmObject, callback) => {
-  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
 
-  // Find the last alarm in the collection
-  alarmCollection
-    .find({})
-    .sort({ AlarmID: -1 })
-    .limit(1)
-    .toArray((findErr, lastAlarm) => {
-      if (findErr) {
-        console.error('Error finding last alarm:', findErr);
-        callback(findErr);
-        return;
-      }
 
-      // Increment the AlarmID or set it to 1 if there are no alarms
-      alarmObject.AlarmID = lastAlarm.length > 0 ? lastAlarm[0].AlarmID + 1 : 1;
+const updateDeviceData = async (db, labApi, dataObject, callback) => {
+  const dataCollection = getCollection(db, `${labApi}_dataCollection`);
 
-      // Insert the new alarm into the collection
-      alarmCollection.insert(alarmObject, (insertErr, insertResult) => {
-        if (insertErr) {
-          console.error('Error adding alarm to collection:', insertErr);
-          callback(insertErr);
-          return;
-        }
+  try {
+    const currentTime = Math.floor(new Date().getTime() / 1000); // Current time in epoch format
 
-        callback(null, 'Alarm added to alarmCollection');
-      });
-    });
+    // Update in dataCollection
+    const dataResult = await dataCollection.updateOne(
+      { DeviceID: dataObject.DeviceID },
+      { $set: { Temperature: dataObject.Temperature, Humidity: dataObject.Humidity, Time: currentTime } }
+    );
+
+    // Check if the update is acknowledged
+    if (dataResult.matchedCount > 0) {
+      callback(null, 'Device data updated successfully');
+    } else {
+      // Provide more information in case of an issue
+      callback('Update not acknowledged', null);
+    }
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
 };
 
-const editAlarm = (db, labApi, updatedAlarm, callback) => {
-  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
-  const { AlarmID } = updatedAlarm;
+const getAllConfig = async (db, labApi, callback) => {
+  const configCollection = getCollection(db, `${labApi}_configCollection`);
 
-  alarmCollection.update({ AlarmID }, { $set: updatedAlarm }, (err, result) => {
-      if (err) {
-          console.error(err);
-          callback(err);
-      }
+  try {
+    const config = await configCollection.find({}).toArray();
 
-      if (result.nModified === 0) {
-          callback(null, `Alarm with AlarmID ${AlarmID} not found`);
-      } else {
-          callback(null, `Alarm with AlarmID ${AlarmID} updated successfully`);
-      }
-  });
+    // Return an empty array if no data is found
+    callback(null, config || []);
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
 };
 
-const removeAlarm = (db, labApi, alarmID, callback) => {
+const getAllHomePageData = async (db, labApi, callback) => {
+  const dataCollection = getCollection(db, `${labApi}_dataCollection`);
+
+  try {
+    const data = await dataCollection.find({}).toArray();
+
+    // Return an empty array if no data is found
+    callback(null, data || []);
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
+};
+
+const getAllAlarms = async (db, labApi, callback) => {
   const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
 
-  // Convert alarmID to an integer
+  try {
+    const alarmData = await alarmCollection.find({}).toArray();
+    callback(null, alarmData);
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
+};
+
+// NEED TO UPDATE NAME IN DATA COLLECTION AS WELL
+
+const editDeviceConfig = async (db, labApi, deviceConfig, callback) => {
+  const configCollection = getCollection(db, `${labApi}_configCollection`);
+  const dataCollection = getCollection(db, `${labApi}_dataCollection`);
+  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
+  const { _id, ...updatedFields } = deviceConfig;
+
+  try {
+    // Update in configCollection
+    const configResult = await configCollection.updateOne({ DeviceID: deviceConfig.DeviceID }, { $set: updatedFields });
+
+    console.log("configResult:", configResult);
+
+    // Update in dataCollection
+    const dataResult = await dataCollection.updateOne({ DeviceID: deviceConfig.DeviceID }, { $set: { DeviceName: deviceConfig.DeviceName } });
+
+    console.log("dataResult:", dataResult);
+
+    // Update in alarmCollection
+    const alarmResult = await alarmCollection.updateMany({ DeviceID: deviceConfig.DeviceID }, { $set: { DeviceName: deviceConfig.DeviceName } });
+
+    console.log("alarmResult:", alarmResult);
+
+    // Check if all updates are acknowledged
+    if (configResult.matchedCount > 0 && dataResult.matchedCount > 0) {
+      callback(null, 'Device config, name, and alarms updated successfully');
+    } else {
+      // Provide more information in case of an issue
+      callback("Update not acknowledged", null);
+    }
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
+};
+
+
+
+
+const removeDevice = async (db, labApi, deviceID, callback) => {
+  const dataCollection = getCollection(db, `${labApi}_dataCollection`);
+  const configCollection = getCollection(db, `${labApi}_configCollection`);
+
+  try {
+    const device = await dataCollection.findOne({ DeviceID: parseInt(deviceID) });
+
+    if (!device) {
+      callback(null, `Device with DeviceID ${deviceID} not found`);
+      return;
+    }
+
+    const { _id } = device;
+
+    const dataRemoveResult = await dataCollection.deleteOne({ _id });
+    const configRemoveResult = await configCollection.deleteOne({ _id });
+
+    callback(null, `Device with DeviceID ${deviceID} removed from dataCollection and configCollection`);
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
+};
+
+const addAlarm = async (db, labApi, alarmObject, callback) => {
+  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
+  const dataCollection = getCollection(db, `${labApi}_dataCollection`);
+
+  try {
+    const { DeviceName, ...restAlarm } = alarmObject;
+
+    // Find DeviceID based on DeviceName
+    const device = await dataCollection.findOne({ DeviceName });
+
+    if (!device) {
+      return callback(null, `Device with DeviceName ${DeviceName} not found`);
+    }
+
+    const { DeviceID } = device;
+
+    // Add DeviceID and DeviceName to the alarmObject
+    const alarmToAdd = { DeviceID, DeviceName, ...restAlarm, Status: "Deactivated" };
+
+    // Find the last alarm to determine the new AlarmID
+    const lastAlarm = await alarmCollection.find({}).sort({ AlarmID: -1 }).limit(1).toArray();
+    alarmToAdd.AlarmID = lastAlarm.length > 0 ? lastAlarm[0].AlarmID + 1 : 1;
+
+    const result = await alarmCollection.insertOne(alarmToAdd);
+    callback(null, 'Alarm added to alarmCollection');
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
+};
+
+
+const editAlarm = async (db, labApi, updatedAlarm, callback) => {
+  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
+  const { AlarmID, _id, ...updatedFields } = updatedAlarm; // Exclude _id from update
+
+  try {
+    const result = await alarmCollection.updateOne({ AlarmID }, { $set: updatedFields });
+
+    if (result.modifiedCount === 0) {
+      callback(null, `Alarm with AlarmID ${AlarmID} not found`);
+    } else {
+      callback(null, `Alarm with AlarmID ${AlarmID} updated successfully`);
+    }
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
+}
+
+const removeAlarm = async (db, labApi, alarmID, callback) => {
+  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
   const parsedAlarmID = parseInt(alarmID, 10);
 
-  alarmCollection.remove({ "AlarmID": parsedAlarmID }, (err, result) => {
-      if (err) {
-          console.error(err);
-          callback(err);
-      }
+  try {
+    const result = await alarmCollection.deleteOne({ "AlarmID": parsedAlarmID });
 
-      if (result.deletedCount === 0) {
-          callback(null, `Alarm with AlarmID ${parsedAlarmID} not found`);
-      } else {
-          callback(null, `Alarm with AlarmID ${parsedAlarmID} removed successfully`);
-      }
-  });
+    if (result.deletedCount === 0) {
+      callback(null, `Alarm with AlarmID ${parsedAlarmID} not found`);
+    } else {
+      callback(null, `Alarm with AlarmID ${parsedAlarmID} removed successfully`);
+    }
+  } catch (err) {
+    console.error(err);
+    callback(err);
+  }
 };
-
-
-
 
 module.exports = {
   connectToDatabase,
   initializeLabs,
   login,
   getCollection,
-  insertTestData,
   getAllConfig,
   editDeviceConfig,
   getAllAlarms,
@@ -407,5 +347,7 @@ module.exports = {
   getAllHomePageData,
   addAlarm,
   editAlarm,
-  removeAlarm
+  removeAlarm,
+  addDevice,
+  updateDeviceData
 };

@@ -1,11 +1,22 @@
 const express = require('express');
 const app = express();
 const port = 3004;
-const { connectToDatabase, initializeLabs, login, getCollection, insertTestData, getAllConfig, editDeviceConfig, getAllAlarms, removeDevice, getAllHomePageData, addAlarm, editAlarm, removeAlarm } = require('./db');
+const { connectToDatabase, initializeLabs, login, getCollection, updateDeviceData, getAllConfig, editDeviceConfig, getAllAlarms, removeDevice, getAllHomePageData, addAlarm, editAlarm, removeAlarm, addDevice } = require('./db');
+const cors = require('cors');
 
 let database; // Define the database variable
 
-app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204,
+  allowedHeaders: 'Content-Type, Authorization, access-control-allow-methods',
+}));
+
+app.use(express.json()); 
+
+
 
 app.get('/', (req, res) => {
   res.send('LabSensors API is Active');
@@ -22,17 +33,64 @@ app.get('/login', async (req, res) => {
       return res.status(500).json({ error: 'Internal server error' });
     }
 
-    login(db, nameOfLab, passwordOfLab, (loginErr, success) => {
+    login(db, nameOfLab, passwordOfLab, (loginErr, lab) => {
       if (loginErr) {
         console.error(loginErr);
         return res.status(500).json({ error: 'Internal server error' });
       }
-
-      if (success) {
-        res.json({ success: true, message: 'Login successful' });
+      console.log("Lab", lab);
+      if (lab.success) {
+        res.json({ success: true, api: lab.api, message: 'Login successful' });
       } else {
         return res.status(401).json({ success: false, message: 'Login failed' });
       }
+    });
+  });
+});
+
+///////////////////////
+// Backend Endpoints
+///////////////////////
+
+// Add Device endpoint
+app.post('/AddDevice', (req, res) => {
+  const labApi = req.query.labApi;
+  const inputObject = req.body; // Assuming the input object is sent in the request body
+
+  connectToDatabase((err, db) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+
+    addDevice(db, labApi, inputObject, (addDeviceErr, result) => {
+      if (addDeviceErr) {
+        console.error(addDeviceErr);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+
+      res.json(result);
+    });
+  });
+});
+
+app.put('/UpdateDeviceData', (req, res) => {
+  const labApi = req.query.labApi;
+  const dataObject = req.body; // Assuming the data object is sent in the request body
+
+  connectToDatabase((err, db) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+
+    updateDeviceData(db, labApi, dataObject, (updateErr, result) => {
+      if (updateErr) {
+        console.error(updateErr);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+
+      res.json({ success: true, message: result });
     });
   });
 });
@@ -231,12 +289,13 @@ connectToDatabase((err, db) => {
   } else {
     database = db; // Set the database variable
     // Populates non-lab collections
-    insertTestData(database, (initErr, result) => {
-        if (initErr) throw initErr;
-        else {
-            console.log(result);
-        }
-    })
+    // insertTestData(database, (initErr, result) => {
+    //     console.log(result);
+    //     if (initErr) throw initErr;
+    //     else {
+    //         console.log(result);
+    //     }
+    // })
 
     initializeLabs(database, (initErr, result) => {
       if (initErr) {
