@@ -1,3 +1,0 @@
-{"k":"0000000078","o":"0000000118","v":"001"}
-{"_id":2,"_uid":2,"_dt":1701976097248,"_s":"399a8e0366a0858bc288916f31e869af"}
-{"DeviceID":1,"DeviceName":"Lab Room 2","Time":1701783780,"Temperature":27,"Humidity":55,"_id":{"$wrap":"$oid","v":2}}

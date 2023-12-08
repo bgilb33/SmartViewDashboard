@@ -1,3 +1,0 @@
-{"k":"0000000078","o":"0000000115","v":"001"}
-{"_id":2,"_uid":2,"_dt":1701976165869,"_s":"47fd5f5966274969428cdd3b01a59ee3"}
-{"DeviceID":1,"AlarmID":1,"DeviceName":"Lab Room 1","SensorType":"Humidity","Threshold":"45","Compare":"<","_id":2}

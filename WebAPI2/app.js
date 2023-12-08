@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const port = 3004;
-const { connectToDatabase, initializeLabs, login, getCollection, insertTestData, getAllConfig, editDeviceConfig, getAllAlarms, removeDevice, getAllHomePageData, addAlarm, editAlarm, removeAlarm } = require('./db');
+const { connectToDatabase, initializeLabs, login, getCollection, updateDeviceData, getAllConfig, editDeviceConfig, getAllAlarms, removeDevice, getAllHomePageData, addAlarm, editAlarm, removeAlarm, addDevice } = require('./db');
 const cors = require('cors');
 
 let database; // Define the database variable
@@ -44,6 +44,53 @@ app.get('/login', async (req, res) => {
       } else {
         return res.status(401).json({ success: false, message: 'Login failed' });
       }
+    });
+  });
+});
+
+///////////////////////
+// Backend Endpoints
+///////////////////////
+
+// Add Device endpoint
+app.post('/AddDevice', (req, res) => {
+  const labApi = req.query.labApi;
+  const inputObject = req.body; // Assuming the input object is sent in the request body
+
+  connectToDatabase((err, db) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+
+    addDevice(db, labApi, inputObject, (addDeviceErr, result) => {
+      if (addDeviceErr) {
+        console.error(addDeviceErr);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+
+      res.json(result);
+    });
+  });
+});
+
+app.put('/UpdateDeviceData', (req, res) => {
+  const labApi = req.query.labApi;
+  const dataObject = req.body; // Assuming the data object is sent in the request body
+
+  connectToDatabase((err, db) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+
+    updateDeviceData(db, labApi, dataObject, (updateErr, result) => {
+      if (updateErr) {
+        console.error(updateErr);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+
+      res.json({ success: true, message: result });
     });
   });
 });
@@ -242,12 +289,13 @@ connectToDatabase((err, db) => {
   } else {
     database = db; // Set the database variable
     // Populates non-lab collections
-    insertTestData(database, (initErr, result) => {
-        if (initErr) throw initErr;
-        else {
-            console.log(result);
-        }
-    })
+    // insertTestData(database, (initErr, result) => {
+    //     console.log(result);
+    //     if (initErr) throw initErr;
+    //     else {
+    //         console.log(result);
+    //     }
+    // })
 
     initializeLabs(database, (initErr, result) => {
       if (initErr) {
