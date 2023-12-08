@@ -38,11 +38,9 @@ client.on('message', (topic, message) => {
   if(topic == deviceTopic)
   
     // console.log("Packet Recieved Insert Into Database");
-    var result = parseString(message.toString());
+    parseStringAndAddData(message.toString());
 
 
-    // Call benji function with arguments: DeviceID, tempature, hummidity;
-    insertIntoDatabase(result[0], result[1], result[2]); 
 });
 
 // Handle error event
@@ -55,16 +53,9 @@ client.on('close', () => {
   console.log('Connection closed');
 });
 
-function insertIntoDatabase(deviceID, tempature, hummidity){
-  console.log("------");
-  console.log("Data:");
-  console.log(deviceID);
-  console.log(tempature);
-  console.log(hummidity);
-  console.log("------");
-}
 
-function parseString(inputString) {
+
+function parseStringAndAddData(inputString) {
   // Split the input string into an array of words
   const words = inputString.split(' ');
   // Extract numerical values from the words and convert them to floating-point numbers
@@ -73,5 +64,31 @@ function parseString(inputString) {
   // Filter out NaN values (non-numeric words)
   const numericValues = values.filter(value => !isNaN(value));
 
-  return numericValues;
+  addData(numericValues[0], numericValues[1], numericValues[2], numericValues[3])
+
+}
+
+async function addData(DeviceID, Temperature, Humidity, Time) {
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  var raw = JSON.stringify({
+    "DeviceID": DeviceID,
+    "Temperature": Temperature,
+    "Humidity": Humidity,
+    "Time": Time
+  });
+
+  var requestOptions = {
+    method: 'PUT',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  fetch("http://localhost:3004/UpdateDeviceData?labApi=nialab", requestOptions)
+    .then(response => response.text())
+    .then(result => console.log(result))
+    .catch(error => console.log('error', error));
+
 }

@@ -6,9 +6,11 @@ DHT dht(DHTPIN, DHTTYPE);
 
 // State Information Start
 int state = 0;
-#define S0 0 //init state, device ID = null
-#define S1 1 // sent state, hoping to get an ID from the server
+#define S0 0 // No WIFI
+#define S1 1 // Connected to WIFI
 #define S2 2 // Has an ID and is sending data
+#define S3 3 // Has an ID and is sending data
+
 
 int RESET = 0; // pull high if you want to use
 int READ = 0; // pull high if you want to use
@@ -23,6 +25,10 @@ int inProcess = 0;
 int deviceID = 0;
 
 volatile float periord = 100; // default
+
+#define NOWIFI 15
+#define YESWIFI 33
+#define SENDING_DATA 27
 // State Information End
 
 // IP and Mac Start
@@ -51,6 +57,12 @@ PubSubClient client(espClient);
 #include <Arduino.h> // not sure if we need this lol
 // Memory Includes End
 
+// Time Start
+#include <NTPClient.h>
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+#include <WiFiUdp.h>
+// Time END
 
 // MQTT and WIFI Start
 void initWiFi() {
@@ -63,12 +75,16 @@ void initWiFi() {
     delay(1000);
   }
   Serial.println(WiFi.localIP());
+  state = S1;
 }
 
 void setupMQTT() {
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);  // Set your callback function for incoming messages
   subscribeToTopic("INIT/IN");  // Replace "your-topic" with the actual topic you want to subscribe to
+  subscribeToTopic("CONFIG");
+  subscribeToTopic("STATUS/OUT");
+
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -78,10 +94,61 @@ void callback(char* topic, byte* payload, unsigned int length) {
   parseCallback(payload);
 }
 
+void getCurrentEpochTimeString(char* result) {
+  timeClient.update();
+  unsigned long epochTime = timeClient.getEpochTime();
+
+  // Convert unsigned long to String
+  String epochTimeString = String(epochTime);
+
+  // Copy the contents of the String to the character array
+  epochTimeString.toCharArray(result, epochTimeString.length() + 1);
+}
+
 void parseCallback(byte* payload){
   char* action = strtok((char*)payload, " ");
 
-  if (strcmp(action, "SETUP") == 0){
+  if (strcmp(action, "STATUS") == 0){
+    char stringDeviceID[10];  // Adjust the size based on the expected length of the integer
+    itoa(deviceID, stringDeviceID, 10);
+
+    randomSeed(analogRead(0));
+    float randomFloat = map(random(10000), 0, 10000, 0.0, 3000.0);
+    vTaskDelay(randomFloat / portTICK_PERIOD_MS); // Delay for 1000ms
+
+    char returnString[30];
+    strcpy(returnString, stringDeviceID);
+
+    if(deviceID == 0){
+      strcat(returnString," 0");
+    }
+    if(deviceID != 0){
+      strcat(returnString," 1");
+    }
+    Serial.print("Returning Status: ");
+    Serial.println(returnString);
+
+    sendMQTT("STATUS/IN", returnString);
+
+  // Message has been sent on the EDIT topic
+  }else if (strcmp(action, "EDIT") == 0){
+    int localDeviceID = atoi(strtok(NULL, " "));
+
+    // If this is the correct device, configure the data
+    if(localDeviceID == deviceID){
+      char* frequency = strtok(NULL, " ");
+      char* units = strtok(NULL, " ");
+
+      Serial.print("Periord has been changed from: ");
+      Serial.print(periord);
+      periord = CalcPeriord(atof(frequency), (units));
+      delay(30);
+      Serial.print(" -> ");
+      Serial.println(periord);
+    }else{Serial.println("Wrong Device");}
+
+  // Message sent on the SETUP topic
+  }else if (strcmp(action, "SETUP") == 0){
     Serial.println("Setup Detected");
     char* recievedMacAddress;
     char* recievedDeviceID;
@@ -107,30 +174,28 @@ void parseCallback(byte* payload){
     
       units = strtok(NULL, " ");
 
-
       periord = CalcPeriord(frequency, units);
 
       Serial.print("Finished Formatting Parameters, the periord is: ");
       Serial.println(periord);
 
-
       // Change State Parameters
-      state = S2;
+      state = S3;
     }
     else{Serial.println("Device ID Intercepted, Incorrect Device");}
   }
-  else{Serial.println("Not setup");}
+  else{Serial.println("Something Strange");}
 
   inProcess = 0;
 }
 
 int CalcPeriord(int frequency,char* units) {
   float localPeriord = -1;
-  if(strcmp(units, "SECOND") == 0){
+  if(strcmp(units, "Second") == 0){
     localPeriord = SEC / frequency;
-  }else if(strcmp(units, "MINUTE") == 0){
+  }else if(strcmp(units, "Minute") == 0){
     localPeriord = MIN / frequency;
-  }else if(strcmp(units, "HOUR") == 0){
+  }else if(strcmp(units, "Hour") == 0){
     localPeriord = HOUR / frequency;
   }
   return localPeriord;
@@ -191,6 +256,19 @@ void setup() {
   initMacIP();
   // Get IP and Mac End
 
+  // Get Time Start
+  timeClient.begin();
+  timeClient.setTimeOffset(0);
+  // Get Time Stop
+
+  // LED Indicators 
+  pinMode(NOWIFI, OUTPUT);
+  pinMode(YESWIFI, OUTPUT);
+  pinMode(SENDING_DATA, OUTPUT);
+
+  digitalWrite(NOWIFI, LOW);
+  digitalWrite(YESWIFI, LOW);
+  digitalWrite(SENDING_DATA, LOW);
 }
 
 void loop() {
@@ -213,6 +291,9 @@ void reconnect() {
     if (client.connect("ESP32Client")) {
       Serial.println("Connected to MQTT Broker");
       subscribeToTopic("INIT/IN");  // Replace "your-topic" with the actual topic you want to subscribe to
+      subscribeToTopic("CONFIG");  // Replace "your-topic" with the actual topic you want to subscribe to
+      subscribeToTopic("STATUS/OUT");
+
     } else {
       Serial.print("Failed with error code: ");
       Serial.println(client.state());
@@ -226,19 +307,32 @@ void StateMachine(void *pvParameters) {
   for (;;) {
     switch (state)
     {
-    // init state, device ID = null
+    // NO WIFI
     case S0:
-      /* code */
+      digitalWrite(NOWIFI, HIGH);
+      digitalWrite(YESWIFI, LOW);
+      digitalWrite(SENDING_DATA, LOW);
       break;
     
-    // sent state, hoping to get an ID from the server
+    // Wifi Connected and Waiting
     case S1:
-      /* code */
+      digitalWrite(NOWIFI, LOW);
+      digitalWrite(YESWIFI, HIGH);
+      digitalWrite(SENDING_DATA, LOW);
       break;
 
-    // Has an ID and is sending data
+    // Sending ID to request database
     case S2:
-      /* code */
+      digitalWrite(NOWIFI, LOW);
+      digitalWrite(YESWIFI, HIGH);
+      digitalWrite(SENDING_DATA, LOW);
+      break;
+
+    // Device ID intercepted, Sending data Now
+    case S3:
+      digitalWrite(NOWIFI, LOW);
+      digitalWrite(YESWIFI, LOW);
+      digitalWrite(SENDING_DATA, HIGH);
       break;
     
     default:
@@ -250,7 +344,7 @@ void StateMachine(void *pvParameters) {
   }
 }
 
-void createDataString(char returnString[], int localDeviceID, float temperature, float humidity){
+void createDataString(char returnString[], int localDeviceID,char epochTimeString[], float temperature, float humidity){
   // Convert deviceID to string using casting
   char deviceIDStr[10];
   itoa(localDeviceID, deviceIDStr, 10);
@@ -258,6 +352,9 @@ void createDataString(char returnString[], int localDeviceID, float temperature,
   strcpy(returnString, deviceIDStr);
   strcat(returnString, " ");
 
+  strcat(returnString, epochTimeString);
+  strcat(returnString, " ");
+    
   // Convert temperature to string using dtostrf
   char tempStr[10];
   dtostrf(temperature, 5, 2, tempStr); // 5 is minimum width, 2 is precision
@@ -269,13 +366,18 @@ void createDataString(char returnString[], int localDeviceID, float temperature,
   dtostrf(humidity, 5, 2, humStr); // 5 is minimum width, 2 is precision
 
   strcat(returnString, humStr);
+
+  Serial.print("MQTT String to be sent: ");
+  Serial.println(returnString);
+
+  
 }
 
 
 // Task 2 function
 void SampleSensor(void *pvParameters) {
   for (;;) {
-    if(state == S2){
+    if(state == S3){
       float humidity = dht.readHumidity();
       float temperature = dht.readTemperature();
 
@@ -284,8 +386,11 @@ void SampleSensor(void *pvParameters) {
         return;
       }
       
+      char epochTimeString[20];
+      getCurrentEpochTimeString(epochTimeString);
+      
       char message[50];
-      createDataString(message, deviceID ,temperature, humidity);
+      createDataString(message, deviceID, epochTimeString ,temperature, humidity);
       sendMQTT("DATA", message);
       //Serial.println(message);
 
@@ -330,7 +435,7 @@ void buttonTask(void *pvParameters) {
       }
 
       // Make sure you are in setup mode, and in send mode, and are not already in the process of sending a message
-      if((state == S0) && SEND && !inProcess && (deviceID == 0)){
+      if((state == S1) && SEND && (deviceID == 0)){ // add inprocess back
         // Create String
         char result[45];
         char* topic = "INIT/OUT";
@@ -341,11 +446,10 @@ void buttonTask(void *pvParameters) {
         strcat(result, formattedMac);
 
         // TO BE ADDED CALL MQTT COMMAND
-
-        Serial.println(result);
+        sendMQTT(topic, result);
         inProcess = 1;
         
-        vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay for 1000ms
+        vTaskDelay(2000 / portTICK_PERIOD_MS); // Delay for 1000ms
       }
     }
     vTaskDelay(100 / portTICK_PERIOD_MS); // Delay for 2000ms

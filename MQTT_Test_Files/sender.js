@@ -31,7 +31,7 @@ function promptUser() {
       rl.close();
     } else {
       // Publish the user's message to a topic
-      const publishTopic = 'INIT/IN';
+      const publishTopic = 'STATUS/IN';
       client.publish(publishTopic, message, (err) => {
         if (!err) {
           console.log(`Published message to ${publishTopic}: ${message}`);
