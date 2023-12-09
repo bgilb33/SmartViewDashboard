@@ -14,7 +14,7 @@ app.post('/AddDevice', (req, res) => {
   const { MAC, IP } = req.body;
 
   // Perform any necessary logic with MAC and IP, and construct the response
-  const DeviceID = 3; // Replace with actual DeviceID logic
+  const DeviceID = 1; // Replace with actual DeviceID logic
   const Frequency = 10; // Replace with actual Frequency logic
   const Units = 'Minute'; // Replace with actual Units logic
 
