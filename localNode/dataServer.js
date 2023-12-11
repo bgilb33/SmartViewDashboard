@@ -68,7 +68,7 @@ function parseStringAndAddData(inputString) {
 
 }
 
-async function addData(DeviceID, Temperature, Humidity, Time) {
+async function addData(DeviceID, Time, Temperature, Humidity) {
   var myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -86,7 +86,7 @@ async function addData(DeviceID, Temperature, Humidity, Time) {
     redirect: 'follow'
   };
 
-  fetch("http://localhost:3004/UpdateDeviceData?labApi=nialab", requestOptions)
+  fetch("http://192.168.1.23:3004/UpdateDeviceData?labApi=nialab", requestOptions)
     .then(response => response.text())
     .then(result => console.log(result))
     .catch(error => console.log('error', error));
