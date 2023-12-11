@@ -6,17 +6,15 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
   styleUrls: ['./add-alarm-modal.component.css']
 })
 export class AddAlarmModalComponent {
+  @Input() deviceNames: string[] = [];
   @Output() addAlarmEvent = new EventEmitter<any>();
   @Output() closeModalEvent = new EventEmitter<void>();
 
   newAlarm = {
-    AlarmID: -1,
-    DeviceID: -1,
     DeviceName: "",
     SensorType: "",
     Compare: "",
     Threshold: "",
-    Status: "Deactivated"
   }
   
   newAlarmCopy: any;

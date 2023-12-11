@@ -1,33 +1,94 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditAlarmModalComponent } from '../edit-alarm-modal/edit-alarm-modal.component';
 import { DeleteSensorModalComponent } from '../delete-sensor-modal/delete-sensor-modal.component';
 import { AddAlarmModalComponent } from '../add-alarm-modal/add-alarm-modal.component';
+import { ApiService } from '../api.service';
+import { AuthService } from '../auth.service';
+import { interval, Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+
+interface ConfigData {
+  _id: string;
+  DeviceID: number;
+  DeviceName: string;
+  Frequency: number;
+  Units: string;
+}
 
 @Component({
   selector: 'app-alarm',
   templateUrl: './alarm.component.html',
   styleUrls: ['./alarm.component.css']
 })
-export class AlarmComponent {
-  alarms = [
-    {
-      AlarmID: 0,
-      DeviceID: 2,
-      DeviceName: "Lab Room 1",
-      SensorType: "Temperature",
-      Compare: ">",
-      Threshold: "90.0",
-      Status: "Deactivated"
-    },
-  ];
-
+export class AlarmComponent implements OnInit, OnDestroy {
+  labApi: any;
+  alarms: any[] = [];
   editedAlarm: any;
   deletedAlarm: any;
   isModalOpen = false;
   modalRef: NgbModalRef | null = null;
+  deviceNames: string[] = [];
+  private dataRefreshSubscription: Subscription | undefined;
 
-  constructor(private modalService: NgbModal) {}
+  constructor(
+    private modalService: NgbModal,
+    private apiService: ApiService,
+    private authService: AuthService,
+  ) {}
+
+  ngOnInit(): void {
+    // Fetch labApi from AuthService
+    this.labApi = this.authService.labApi;
+
+    // Fetch initial data
+    this.fetchData();
+
+    // Set up periodic data refresh every 10 seconds
+    this.dataRefreshSubscription = interval(10000)
+      .pipe(
+        switchMap(() => this.apiService.getAllAlarms(this.labApi))
+      )
+      .subscribe(
+        (alarmData: any[]) => {
+          this.alarms = alarmData;
+        },
+        (error) => {
+          console.error('Error fetching alarm data:', error);
+        }
+      );
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from the data refresh subscription to avoid memory leaks
+    if (this.dataRefreshSubscription) {
+      this.dataRefreshSubscription.unsubscribe();
+    }
+  }
+
+  private fetchData(): void {
+    this.apiService.getAllAlarms(this.labApi).subscribe(
+      (alarmData: any[]) => {
+        this.alarms = alarmData;
+      },
+      (error) => {
+        console.error('Error fetching alarm data:', error);
+      }
+    );
+
+    this.apiService.getAllConfig(this.labApi).subscribe(
+      (response: { success: boolean, configData: ConfigData[] }) => {
+        if (response.success) {
+          for (let config of response.configData) {
+            this.deviceNames.push(config.DeviceName);
+          }
+        }
+      },
+      (error) => {
+        console.error('Error fetching config data:', error);
+      }
+    );
+  }
 
   openEditModal(sensor: any): void {
     this.editedAlarm = { ...sensor };
@@ -55,13 +116,12 @@ export class AlarmComponent {
 
   openAlarmModal(): void {
     this.modalRef = this.modalService.open(AddAlarmModalComponent, { centered: true, size: 'lg' });
-    
-    this.modalRef.componentInstance.addAlarmEvent.subscribe((formData:any) => this.addAlarm(formData));
+    this.modalRef.componentInstance.deviceNames = this.deviceNames;
+
+    this.modalRef.componentInstance.addAlarmEvent.subscribe((formData: any) => this.addAlarm(formData));
     this.modalRef.componentInstance.closeModalEvent.subscribe(() => this.closeModal());
     this.isModalOpen = true;
   }
-
-
 
   closeModal(): void {
     if (this.modalRef) {
@@ -71,36 +131,63 @@ export class AlarmComponent {
   }
 
   saveChanges(formData: any): void {
-    const index = this.alarms.findIndex(alarm => alarm.AlarmID === this.editedAlarm.AlarmID);
+    console.log(formData);
+    this.apiService.editAlarm(this.labApi, formData).subscribe(
+      (response) => {
+        if (response.success) {
+          const index = this.alarms.findIndex(alarm => alarm.AlarmID === this.editedAlarm.AlarmID);
 
-    if (index !== -1) {
-      this.alarms[index] = { ...formData };
-    }
-
-    console.log(this.alarms);
+          if (index !== -1) {
+            this.alarms[index] = { ...formData };
+          }
+        }
+      },
+      (error) => {
+        console.error('Error updating alarm data:', error);
+      }
+    )
 
     this.closeModal();
   }
 
   deleteSensor(): void {
-    const index = this.alarms.findIndex(alarm => alarm.AlarmID === this.deletedAlarm.AlarmID);
-
-    if (index !== -1) {
-      this.alarms.splice(index, 1);
-    }
-
-    console.log(this.alarms);
-
+    this.apiService.removeAlarm(this.labApi, this.deletedAlarm.AlarmID).subscribe(
+      (response) => {
+        if (response.success) {
+          const index = this.alarms.findIndex(alarm => alarm.AlarmID === this.deletedAlarm.AlarmID);
+  
+          if (index !== -1) {
+            this.alarms.splice(index, 1);
+          }
+  
+        }
+      },
+      (error) => {
+        console.error('Error removing alarm:', error);
+      }
+    )
+  
     this.closeModal();
   }
+  
 
-  addAlarm(formData:any): void {
-    const index = this.alarms.length;
-    formData.AlarmID = index;
-    this.alarms.push(formData);
+  addAlarm(formData: any): void {
     console.log(formData);
-    this.closeModal();
+    this.apiService.addAlarm(this.labApi, formData).subscribe(
+      (response) => {
+        if (response.success) {
+          formData['Status'] = 'Not Triggered';
+          const index = this.alarms.length;
+          formData.AlarmID = index;
+          this.alarms.push(formData);
+        }
+      },
+      (error) => {
+        console.error('Error adding alarm:', error);
+      }
+    )
 
+    this.closeModal();
   }
 
   editAlarm(alarm: any): void {
@@ -110,4 +197,9 @@ export class AlarmComponent {
   deleteAlarm(alarm: any): void {
     this.openDeleteModal(alarm);
   }
+
+  getBackgroundColor(status: string): string {
+    return status === 'Triggered' ? 'rgba(255, 99, 71, 0.1)' : 'white';
+  }
+
 }

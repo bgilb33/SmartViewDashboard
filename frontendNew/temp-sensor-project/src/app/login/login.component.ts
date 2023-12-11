@@ -15,11 +15,18 @@ export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router) {}
 
-  onSubmit(): void {
-    if (this.authService.login(this.username, this.password)) {
-      this.router.navigate(['/home']);
-    } else {
-      alert('Invalid login credentials');
+  async onSubmit(): Promise<void> {
+    try {
+      const success = await this.authService.login(this.username, this.password);
+
+      if (success) {
+        this.router.navigate(['/home']);
+      } else {
+        alert('Invalid login credentials');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      alert('An error occurred during login');
     }
   }
 }

@@ -3,6 +3,7 @@ const app = express();
 const port = 3004;
 const { connectToDatabase, initializeLabs, login, getCollection, updateDeviceData, getAllConfig, editDeviceConfig, getAllAlarms, removeDevice, getAllHomePageData, addAlarm, editAlarm, removeAlarm, addDevice } = require('./db');
 const cors = require('cors');
+const sendConfigData = require('./ConfigSender');
 
 let database; // Define the database variable
 
@@ -75,6 +76,7 @@ app.post('/AddDevice', (req, res) => {
 });
 
 app.put('/UpdateDeviceData', (req, res) => {
+
   const labApi = req.query.labApi;
   const dataObject = req.body; // Assuming the data object is sent in the request body
 
@@ -163,6 +165,17 @@ app.put('/EditDeviceConfig', (req, res) => {
       }
 
       res.json({ success: true, editedConfig });
+
+      const sendData = {
+        "DeviceID": deviceConfig.DeviceID,
+        "Frequency": deviceConfig.Frequency,
+        "Units": deviceConfig.Units
+      }
+
+      console.log("SENDING DATA OVER MQTT: ", sendData);
+
+      sendConfigData(sendData);
+
     });
   });
 });

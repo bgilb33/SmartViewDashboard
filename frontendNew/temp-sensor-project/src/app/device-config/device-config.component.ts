@@ -1,9 +1,9 @@
-// device-config.component.ts
-
 import { Component } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditSensorModalComponent } from '../edit-sensor-modal/edit-sensor-modal.component';
 import { DeleteSensorModalComponent } from '../delete-sensor-modal/delete-sensor-modal.component';
+import { ApiService } from '../api.service';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-device-config',
@@ -11,20 +11,34 @@ import { DeleteSensorModalComponent } from '../delete-sensor-modal/delete-sensor
   styleUrls: ['./device-config.component.css'],
 })
 export class DeviceConfigComponent {
-  tempSensors = [
-    {
-      DeviceID: 0,
-      DeviceName: 'Lab Room 1',
-      Frequency: 7,
-      Units: 'Hour'
-    }
-  ];
+  tempSensors: any[] = [];
   editedSensor: any;
   deletedSensor: any;
   isModalOpen = false;
   modalRef: NgbModalRef | null = null;
+  labApi: string = ''; 
 
-  constructor(private modalService: NgbModal) {}
+  constructor(
+    private modalService: NgbModal,
+    private apiService: ApiService,
+    private authService: AuthService,
+  ) {}
+
+  ngOnInit(): void {
+    // Fetch labApi from AuthService
+    this.labApi = this.authService.labApi;
+
+    // Fetch data using labApi
+    this.apiService.getAllConfig(this.labApi).subscribe(
+      (configData) => {
+        this.tempSensors = configData.configData;
+
+      },
+      (error) => {
+        console.error('Error fetching config data:', error);
+      }
+    );
+  }
 
   openEditModal(sensor: any): void {
     this.editedSensor = { ...sensor };
@@ -59,29 +73,45 @@ export class DeviceConfigComponent {
 
   // EDIT W API
   saveChanges(formData: any): void {
-    // Implement your logic to save changes to the sensor
-    // Close the modal after saving changes
-    const index = this.tempSensors.findIndex(sensor => sensor.DeviceID === this.editedSensor.DeviceID);
-    console.log("INDEX: ", index);
-    if (index !== -1) {
-      this.tempSensors[index] = { ...formData };
-    }
 
-    console.log(formData);
+    this.apiService.editDeviceConfig(this.labApi, formData).subscribe(
+      (response) => {
+        if (response.success) {
+          const index = this.tempSensors.findIndex(sensor => sensor.DeviceID === this.editedSensor.DeviceID);
+          console.log("INDEX: ", index);
+          if (index !== -1) {
+            this.tempSensors[index] = { ...formData };
+          }
+        }
+      },
+      (error) => {
+        console.error('Error updating config data:', error);
+      }
+    )
+
+
     this.closeModal();
   }
 
   // DELETE W API
   deleteSensor(): void {
-    // Implement your logic to delete the sensor
+    // NEED TO IMPLEMENT W API
     // Close the modal after deleting the sensor
-    const index = this.tempSensors.findIndex(sensor => sensor.DeviceID === this.deletedSensor.DeviceID);
+    this.apiService.removeDevice(this.labApi, this.deletedSensor.DeviceID).subscribe(
+      (response) => {
+        if (response.success) {
+          const index = this.tempSensors.findIndex(sensor => sensor.DeviceID === this.deletedSensor.DeviceID);
 
-    if (index !== -1) {
-      this.tempSensors.splice(index, 1);
-    }
+          if (index !== -1) {
+            this.tempSensors.splice(index, 1);
+          }
+        }
+      },
+      (error) => {
+        console.log(error);
+      }
+    )
 
-    console.log(this.tempSensors);
     this.closeModal();
   }
 

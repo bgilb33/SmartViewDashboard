@@ -17,6 +17,8 @@ import { AlarmComponent } from './alarm/alarm.component';
 import { EditAlarmModalComponent } from './edit-alarm-modal/edit-alarm-modal.component';
 import { DeleteDeviceModalComponent } from './delete-device-modal/delete-device-modal.component';
 import { AddAlarmModalComponent } from './add-alarm-modal/add-alarm-modal.component';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { CorsInterceptor } from './http-interceptor';
 
 @NgModule({
   declarations: [
@@ -37,8 +39,13 @@ import { AddAlarmModalComponent } from './add-alarm-modal/add-alarm-modal.compon
     AppRoutingModule,
     FormsModule,
     NgbModule,
+    HttpClientModule
   ],
-  providers: [],
+  providers: [{
+    provide: HTTP_INTERCEPTORS,
+    useClass: CorsInterceptor,
+    multi: true,
+  }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

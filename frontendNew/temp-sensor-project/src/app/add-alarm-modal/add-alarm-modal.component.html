@@ -3,9 +3,11 @@
       <h2>Add Alarm</h2>
       <form>
         <div class="form-group">
-            <label for="newName">Device Name:</label>
-            <input type="text" id="newName" name="newName" [(ngModel)]="newAlarm.DeviceName" placeholder="Name" required>
-          </div>
+          <label for="newName">Device Name:</label>
+          <select id="newName" name="newName" [(ngModel)]="newAlarm.DeviceName" [ngModelOptions]="{ standalone: true }" required>
+            <option *ngFor="let deviceName of deviceNames" [value]="deviceName">{{ deviceName }}</option>
+          </select>
+        </div>
 
         <div class="form-group">
           <label for="newSensorType">Alarm Type:</label>

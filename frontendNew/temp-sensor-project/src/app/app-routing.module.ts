@@ -10,10 +10,10 @@ import { AlarmComponent } from './alarm/alarm.component';
 
 const appRoutes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'home', component: HomePageComponent },
-  { path: 'config', component: DeviceConfigComponent},
-  { path: 'alarm', component: AlarmComponent},
-  { path: '', redirectTo: '/config', pathMatch: 'full' },
+  { path: 'home', component: HomePageComponent, canActivate: [AuthGuard] },
+  { path: 'config', component: DeviceConfigComponent, canActivate: [AuthGuard]},
+  { path: 'alarm', component: AlarmComponent, canActivate: [AuthGuard]},
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
 ];
 
 @NgModule({

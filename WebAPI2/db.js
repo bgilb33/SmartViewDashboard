@@ -96,12 +96,15 @@ const addDevice = async (db, labApi, inputObject, callback) => {
     // Asynchronously get the count for the new DeviceID
     const index = await dataCollection.countDocuments() + 1;
 
+    const currentTime = Math.floor(new Date().getTime() / 1000);
+    
+
     const dataObject = {
       "DeviceID": index,
       "DeviceName": `Device ${index}`,
       "Temperature": 0,
       "Humidity": 0,
-      "Time": inputObject.Time
+      "Time": currentTime
     };
 
     const configObject = {
@@ -140,19 +143,39 @@ const addDevice = async (db, labApi, inputObject, callback) => {
 
 const updateDeviceData = async (db, labApi, dataObject, callback) => {
   const dataCollection = getCollection(db, `${labApi}_dataCollection`);
+  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
 
   try {
-    const currentTime = Math.floor(new Date().getTime() / 1000); // Current time in epoch format
+    // const currentTime = Math.floor(new Date().getTime() / 1000); // Current time in epoch format
 
     // Update in dataCollection
     const dataResult = await dataCollection.updateOne(
       { DeviceID: dataObject.DeviceID },
-      { $set: { Temperature: dataObject.Temperature, Humidity: dataObject.Humidity, Time: currentTime } }
+      { $set: { Temperature: dataObject.Temperature, Humidity: dataObject.Humidity, Time: dataObject.Time } }
     );
 
     // Check if the update is acknowledged
     if (dataResult.matchedCount > 0) {
-      callback(null, 'Device data updated successfully');
+      // Check and update alarms
+      const alarms = await alarmCollection.find({ DeviceID: dataObject.DeviceID }).toArray();
+
+      for (const alarm of alarms) {
+        if (isAlarmTriggered(dataObject, alarm)) {
+          // Alarm is triggered
+          await alarmCollection.updateOne(
+            { AlarmID: alarm.AlarmID },
+            { $set: { Status: "Triggered" } }
+          );
+        } else {
+          // Alarm is not triggered
+          await alarmCollection.updateOne(
+            { AlarmID: alarm.AlarmID },
+            { $set: { Status: "Not Triggered" } }
+          );
+        }
+      }
+
+      callback(null, 'Device data and alarms updated successfully');
     } else {
       // Provide more information in case of an issue
       callback('Update not acknowledged', null);
@@ -160,6 +183,41 @@ const updateDeviceData = async (db, labApi, dataObject, callback) => {
   } catch (err) {
     console.error(err);
     callback(err);
+  }
+};
+
+// Function to check if an alarm is triggered based on device data
+const isAlarmTriggered = (dataObject, alarm) => {
+  switch (alarm.SensorType) {
+    case "Temperature":
+      return checkTemperatureAlarm(dataObject.Temperature, alarm.Threshold, alarm.Compare);
+    case "Humidity":
+      return checkHumidityAlarm(dataObject.Humidity, alarm.Threshold, alarm.Compare)
+    default:
+      return false;
+  }
+};
+
+// Function to check temperature alarm
+const checkTemperatureAlarm = (currentTemperature, threshold, compare) => {
+  switch (compare) {
+    case ">":
+      return currentTemperature > threshold;
+    case "<":
+      return currentTemperature < threshold;
+    default:
+      return false;
+  }
+};
+
+const checkHumidityAlarm = (currentHumidity, threshold, compare) => {
+  switch (compare) {
+    case ">":
+      return currentHumidity > threshold;
+    case "<":
+      return currentHumidity < threshold;
+    default:
+      return false;
   }
 };
 
@@ -241,11 +299,10 @@ const editDeviceConfig = async (db, labApi, deviceConfig, callback) => {
 };
 
 
-
-
 const removeDevice = async (db, labApi, deviceID, callback) => {
   const dataCollection = getCollection(db, `${labApi}_dataCollection`);
   const configCollection = getCollection(db, `${labApi}_configCollection`);
+  const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
 
   try {
     const device = await dataCollection.findOne({ DeviceID: parseInt(deviceID) });
@@ -257,15 +314,26 @@ const removeDevice = async (db, labApi, deviceID, callback) => {
 
     const { _id } = device;
 
+    // Remove device from dataCollection
     const dataRemoveResult = await dataCollection.deleteOne({ _id });
-    const configRemoveResult = await configCollection.deleteOne({ _id });
 
-    callback(null, `Device with DeviceID ${deviceID} removed from dataCollection and configCollection`);
+    // Remove device from configCollection
+    const configRemoveResult = await configCollection.deleteOne({ DeviceID: parseInt(deviceID) });
+
+    // Remove associated alarms from alarmCollection
+    const alarmsRemoveResult = await alarmCollection.deleteMany({ DeviceID: parseInt(deviceID) });
+
+    if (dataRemoveResult.deletedCount > 0 && configRemoveResult.deletedCount > 0) {
+      callback(null, `Device with DeviceID ${deviceID} removed from dataCollection, configCollection, and ${alarmsRemoveResult.deletedCount} alarms removed from alarmCollection`);
+    } else {
+      callback('Deletion not acknowledged', null);
+    }
   } catch (err) {
     console.error(err);
     callback(err);
   }
 };
+
 
 const addAlarm = async (db, labApi, alarmObject, callback) => {
   const alarmCollection = getCollection(db, `${labApi}_alarmCollection`);
@@ -284,7 +352,7 @@ const addAlarm = async (db, labApi, alarmObject, callback) => {
     const { DeviceID } = device;
 
     // Add DeviceID and DeviceName to the alarmObject
-    const alarmToAdd = { DeviceID, DeviceName, ...restAlarm, Status: "Deactivated" };
+    const alarmToAdd = { DeviceID, DeviceName, ...restAlarm, Status: "Not Triggered" };
 
     // Find the last alarm to determine the new AlarmID
     const lastAlarm = await alarmCollection.find({}).sort({ AlarmID: -1 }).limit(1).toArray();

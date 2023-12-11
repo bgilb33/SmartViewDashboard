@@ -1,60 +1,67 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ApiService } from '../api.service';
+import { AuthService } from '../auth.service';
+import { interval, Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-home-page',
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.css']
 })
-export class HomePageComponent {
-  labName = "Benji's Lab"
-  tempSensors = [
-    {
-      DeviceID: 0,
-      DeviceName: "Lab Room 1",
-      Time: 1701783780,
-      Temperature: 89.0,
-      Humidity: 67.2
-    },
-    {
-      DeviceID: 1,
-      DeviceName: "Lab Room 2",
-      Time: 1701783780,
-      Temperature: 92.7,
-      Humidity: 55.3
-    },
-    {
-      DeviceID: 2,
-      DeviceName: "Snack Room 1",
-      Time: 1701783780,
-      Temperature: 78.3,
-      Humidity: 44.4
-    },
-    {
-      DeviceID: 3,
-      DeviceName: "Fridge 1",
-      Time: 1701783780,
-      Temperature: 22.2,
-      Humidity: 78
-    },
-    {
-      DeviceID: 4,
-      DeviceName: "Snack Room 2",
-      Time: 1701783780,
-      Temperature: 89.0,
-      Humidity: 67.2
-    },
-    {
-      DeviceID: 5,
-      DeviceName: "Lab Room 3",
-      Time: 1701783780,
-      Temperature: 89.0,
-      Humidity: 67.2
+export class HomePageComponent implements OnInit, OnDestroy {
+  labApi: any;
+  labName: any = 'NIA Lab';
+  tempSensors: any[] = [];
+  private dataRefreshSubscription: Subscription | undefined;
+
+  ngOnInit(): void {
+    // Fetch labApi from AuthService
+    this.labApi = this.authService.labApi;
+
+    // Fetch initial data
+    this.fetchData();
+
+    // Set up periodic data refresh every 10 seconds
+    this.dataRefreshSubscription = interval(10000)
+      .pipe(
+        switchMap(() => this.apiService.getHomePageData(this.labApi))
+      )
+      .subscribe(
+        (homePageData) => {
+          this.tempSensors = homePageData.data;
+        },
+        (error) => {
+          console.error('Error fetching data:', error);
+        }
+      );
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from the data refresh subscription to avoid memory leaks
+    if (this.dataRefreshSubscription) {
+      this.dataRefreshSubscription.unsubscribe();
     }
-  ]
+  }
+
+  private fetchData(): void {
+    this.apiService.getHomePageData(this.labApi).subscribe(
+      (homePageData) => {
+        this.tempSensors = homePageData.data;
+      },
+      (error) => {
+        console.error('Error fetching data:', error);
+      }
+    );
+  }
+
+  constructor(
+    private apiService: ApiService,
+    private authService: AuthService
+  ) {}
 
   convertEpochToDateTime(epochTime: number): string {
-    // Convert epoch time to milliseconds
     const date = new Date(epochTime * 1000);
-    return date.toLocaleString('en-US', { timeZone: "America/New_York" });
+    return date.toLocaleString('en-US', { timeZone: 'America/New_York' });
   }
 }
