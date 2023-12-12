@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class ApiService {
-  private apiUrl = 'https://elf-divine-monkfish.ngrok-free.app'; // Update this with your actual API URL
+  private apiUrl = 'http://128.197.55.111:3004'; // Update this with your actual API URL
 
   constructor(private http: HttpClient) {}
 
