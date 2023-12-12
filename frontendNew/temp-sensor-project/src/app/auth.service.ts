@@ -34,7 +34,7 @@ export class AuthService {
 
   // API call for user login
   login(username: string, password: string): Promise<boolean> {
-    const loginUrl = 'http://localhost:3004/login'; // Adjust the URL based on your API endpoint
+    const loginUrl = 'https://elf-divine-monkfish.ngrok-free.app/login'; // Adjust the URL based on your API endpoint
 
     // Make an API call to authenticate the user
     return this.http
