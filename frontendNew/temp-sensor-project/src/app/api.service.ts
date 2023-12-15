@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class ApiService {
-  private apiUrl = 'http://128.197.55.111:3004'; // Update this with your actual API URL
+  private apiUrl = 'https://labsensorfunctions.netlify.app/.netlify/functions/hello-world'; // Update this with your actual API URL
 
   constructor(private http: HttpClient) {}
 

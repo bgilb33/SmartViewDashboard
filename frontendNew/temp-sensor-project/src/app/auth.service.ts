@@ -3,6 +3,8 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import axios from 'axios';
+
 
 @Injectable({
   providedIn: 'root',
@@ -33,24 +35,19 @@ export class AuthService {
     return this.isAuthenticated;
   }
 
-  // API call for user login
+
+
   login(username: string, password: string): Promise<boolean> {
-    const loginUrl = 'http://128.197.55.111:3004/login'; // Adjust the URL based on your API endpoint
+    const loginUrl = 'https://labsensorfunctions.netlify.app/.netlify/functions/hello-world'; // Adjust the URL based on your API endpoint
 
     // Make an API call to authenticate the user
-    return this.http
-      .get(loginUrl, {
-        params: {
-          labName: username,
-          labPassword: password,
-        },
-      })
-      .toPromise()
+    return axios
+      .get(loginUrl)
       .then((response: any) => {
-        if (response.success) {
+        if (response.data.success) {
           // Set isAuthenticated to true upon successful login
           this.isAuthenticated = true;
-          this.labApi = response.api;
+          this.labApi = response.data.api;
           return true;
         } else {
           // Clear isAuthenticated on failed login
@@ -65,7 +62,6 @@ export class AuthService {
         return false;
       });
   }
-
   // Simulate user logout
   logout(): void {
     // Clear authentication status on logout
