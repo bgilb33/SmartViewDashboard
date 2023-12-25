@@ -50,8 +50,13 @@ export class AlarmComponent implements OnInit, OnDestroy {
         switchMap(() => this.apiService.getAllAlarms(this.labApi))
       )
       .subscribe(
-        (alarmData: any[]) => {
-          this.alarms = alarmData;
+        (response) => {
+          if (response.success) {
+            this.alarms = response.data;
+          }
+          else {
+            console.error(response.message);
+          }
         },
         (error) => {
           console.error('Error fetching alarm data:', error);
@@ -68,8 +73,13 @@ export class AlarmComponent implements OnInit, OnDestroy {
 
   private fetchData(): void {
     this.apiService.getAllAlarms(this.labApi).subscribe(
-      (alarmData: any[]) => {
-        this.alarms = alarmData;
+      (response) => {
+        if (response.success) {
+          this.alarms = response.data;
+        }
+        else {
+          console.error(response.message);
+        }
       },
       (error) => {
         console.error('Error fetching alarm data:', error);
@@ -77,11 +87,14 @@ export class AlarmComponent implements OnInit, OnDestroy {
     );
 
     this.apiService.getAllConfig(this.labApi).subscribe(
-      (response: { success: boolean, configData: ConfigData[] }) => {
+      (response) => {
         if (response.success) {
-          for (let config of response.configData) {
+          for (let config of response.data) {
             this.deviceNames.push(config.DeviceName);
           }
+        }
+        else {
+          console.error(response.message);
         }
       },
       (error) => {
@@ -141,6 +154,9 @@ export class AlarmComponent implements OnInit, OnDestroy {
             this.alarms[index] = { ...formData };
           }
         }
+        else {
+          console.error(response.message);
+        }
       },
       (error) => {
         console.error('Error updating alarm data:', error);
@@ -161,6 +177,9 @@ export class AlarmComponent implements OnInit, OnDestroy {
           }
   
         }
+        else {
+          console.error(response.message);
+        }
       },
       (error) => {
         console.error('Error removing alarm:', error);
@@ -180,6 +199,9 @@ export class AlarmComponent implements OnInit, OnDestroy {
           const index = this.alarms.length;
           formData.AlarmID = index;
           this.alarms.push(formData);
+        }
+        else {
+          console.error(response.message);
         }
       },
       (error) => {

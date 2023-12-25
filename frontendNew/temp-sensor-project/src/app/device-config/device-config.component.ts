@@ -30,9 +30,10 @@ export class DeviceConfigComponent {
 
     // Fetch data using labApi
     this.apiService.getAllConfig(this.labApi).subscribe(
-      (configData) => {
-        this.tempSensors = configData.configData;
-
+      (response) => {
+        if (response.success) {
+          this.tempSensors = response.data;
+        }
       },
       (error) => {
         console.error('Error fetching config data:', error);
@@ -78,18 +79,18 @@ export class DeviceConfigComponent {
       (response) => {
         if (response.success) {
           const index = this.tempSensors.findIndex(sensor => sensor.DeviceID === this.editedSensor.DeviceID);
-          console.log("INDEX: ", index);
           if (index !== -1) {
             this.tempSensors[index] = { ...formData };
           }
+        }
+        else {
+          console.error(response.message);
         }
       },
       (error) => {
         console.error('Error updating config data:', error);
       }
     )
-
-
     this.closeModal();
   }
 
@@ -105,6 +106,9 @@ export class DeviceConfigComponent {
           if (index !== -1) {
             this.tempSensors.splice(index, 1);
           }
+        }
+        else {
+          console.error(response.message)
         }
       },
       (error) => {

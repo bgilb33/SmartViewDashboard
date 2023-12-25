@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class ApiService {
-  private apiUrl = 'http://localhost:3004'; // Update this with your actual API URL
+  private apiUrl = 'http://localhost:8888/.netlify/functions'; // Update this with your actual API URL
 
   constructor(private http: HttpClient) {}
 
@@ -26,27 +26,27 @@ export class ApiService {
 
   // Add methods for other API endpoints as needed
   getAllConfig(labApi: string): Observable<any> {
-    const url = `${this.apiUrl}/GetAllConfig`;
+    const url = `${this.apiUrl}/getAllConfigData`;
     const params = { labApi };
 
     return this.http.get(url, { params, headers: this.getHeaders() });
   }
 
   getHomePageData(labApi: string): Observable<any> {
-    const url = `${this.apiUrl}/GetHomePageData`;
+    const url = `${this.apiUrl}/getAllHomePageData`;
     const params = { labApi };
 
     return this.http.get(url, { params, headers: this.getHeaders() });
   }
 
   editDeviceConfig(labApi: string, deviceConfig: any): Observable<any> {
-    const url = `${this.apiUrl}/EditDeviceConfig?labApi=${labApi}`;
+    const url = `${this.apiUrl}/editDeviceConfig?labApi=${labApi}`;
     
     return this.http.put(url, deviceConfig, { headers: this.getHeaders() });
   }
 
   removeDevice(labApi: string, deviceID: string): Observable<any> {
-    const url = `${this.apiUrl}/RemoveDevice?labApi=${labApi}&deviceID=${deviceID}`;
+    const url = `${this.apiUrl}/removeDevice?labApi=${labApi}&deviceID=${deviceID}`;
     
     return this.http.delete(url, { headers: this.getHeaders() });
   }
@@ -55,26 +55,32 @@ export class ApiService {
 
   // Example for alarm-related methods
   getAllAlarms(labApi: string): Observable<any> {
-    const url = `${this.apiUrl}/GetAllAlarms`;
+    const url = `${this.apiUrl}/getAllAlarmData`;
     const params = { labApi };
 
     return this.http.get(url, { params, headers: this.getHeaders() });
   }
 
+  getAllHistoricalDataForDevice(labApi: string, deviceID: string): Observable<any> {
+    const url = `${this.apiUrl}/getAllHistoricalDataForDevice?labApi=${labApi}&deviceID=${deviceID}`;
+
+    return this.http.get(url, { headers: this.getHeaders() });
+  }
+
   addAlarm(labApi: string, alarmObject: any): Observable<any> {
-    const url = `${this.apiUrl}/AddAlarm?labApi=${labApi}`;
+    const url = `${this.apiUrl}/addAlarm?labApi=${labApi}`;
     
     return this.http.post(url, alarmObject, { headers: this.getHeaders() });
   }
 
   editAlarm(labApi: string, updatedAlarm: any): Observable<any> {
-    const url = `${this.apiUrl}/EditAlarm?labApi=${labApi}`;
+    const url = `${this.apiUrl}/editAlarm?labApi=${labApi}`;
     
     return this.http.put(url, updatedAlarm, { headers: this.getHeaders() });
   }
 
   removeAlarm(labApi: string, alarmID: string): Observable<any> {
-    const url = `${this.apiUrl}/RemoveAlarm?labApi=${labApi}&alarmID=${alarmID}`;
+    const url = `${this.apiUrl}/removeAlarm?labApi=${labApi}&alarmID=${alarmID}`;
     
     return this.http.delete(url, { headers: this.getHeaders() });
   }

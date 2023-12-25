@@ -1,12 +1,19 @@
 // auth.service.ts
 
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+  }
+
   // Use localStorage to store authentication status
   get isAuthenticated(): boolean {
     return localStorage.getItem('isAuthenticated') === 'true';
@@ -33,33 +40,35 @@ export class AuthService {
   }
 
   // API call for user login
-  login(username: string, password: string): Promise<boolean> {
-    const loginUrl = 'http://localhost:3004/login'; // Adjust the URL based on your API endpoint
+  async login(username: string, password: string): Promise<boolean> {
+    const loginUrl = 'http://localhost:8888/.netlify/functions/login';
 
-    // Make an API call to authenticate the user
+    // No need to hash on the frontend
+
+    // Create headers with content type
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+
+    // Prepare the request body
+    const requestBody = {
+      labName: username,
+      labPassword: password, // Send the plaintext password to the server
+    };
+
     return this.http
-      .get(loginUrl, {
-        params: {
-          labName: username,
-          labPassword: password,
-        },
-      })
+      .post(loginUrl, requestBody, { headers: this.getHeaders() })
       .toPromise()
       .then((response: any) => {
         if (response.success) {
-          // Set isAuthenticated to true upon successful login
           this.isAuthenticated = true;
           this.labApi = response.api;
           return true;
         } else {
-          // Clear isAuthenticated on failed login
           this.isAuthenticated = false;
           return false;
         }
       })
       .catch((error) => {
         console.error('Error during login:', error);
-        // Clear isAuthenticated on error
         this.isAuthenticated = false;
         return false;
       });

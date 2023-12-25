@@ -1,6 +1,6 @@
 // Temp / Hummidity Sensor
 #include <DHT.h>
-#define DHTPIN 21     // Pin where the DHT11 is connected to (change accordingly)
+#define DHTPIN 23     // Pin where the DHT11 is connected to (change accordingly)
 #define DHTTYPE DHT11 // DHT 11 sensor type
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -26,9 +26,9 @@ int deviceID = 0;
 
 volatile float periord = 100; // default
 
-#define NOWIFI 15
-#define YESWIFI 33
-#define SENDING_DATA 27
+#define NOWIFI 21
+#define YESWIFI 19
+#define SENDING_DATA 18
 // State Information End
 
 // IP and Mac Start
@@ -37,7 +37,7 @@ char formattedMac[18]; // Array to store the formatted MAC address (including co
 // IP and Mac End
 
 // Button Information Start
-#define BUTTON_PIN 14 // Example pin for the button (change accordingly)
+#define BUTTON_PIN 22 // Example pin for the button (change accordingly)
 SemaphoreHandle_t xSemaphore;
 void buttonTask(void *pvParameters);
 void buttonISR();
@@ -46,8 +46,8 @@ void buttonISR();
 // MQTT Information Start
 #include <WiFi.h>
 #include <PubSubClient.h>
-const char* ssid = "Group_2";
-const char* password = "smartsys";
+const char* ssid = "TP-Link_0A20";
+const char* password = "04550259";
 const char* mqtt_server = "192.168.1.7";
 WiFiClient espClient;
 PubSubClient client(espClient);
