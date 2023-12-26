@@ -1,6 +1,6 @@
 // Temp / Hummidity Sensor
 #include <DHT.h>
-#define DHTPIN 21     // Pin where the DHT11 is connected to (change accordingly)
+#define DHTPIN 23     // Pin where the DHT11 is connected to (change accordingly)
 #define DHTTYPE DHT11 // DHT 11 sensor type
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -26,9 +26,9 @@ int deviceID = 0;
 
 volatile float periord = 100; // default
 
-#define NOWIFI 15
-#define YESWIFI 33
-#define SENDING_DATA 27
+#define NOWIFI 5
+#define YESWIFI 19
+#define SENDING_DATA 18
 // State Information End
 
 // IP and Mac Start
@@ -37,7 +37,7 @@ char formattedMac[18]; // Array to store the formatted MAC address (including co
 // IP and Mac End
 
 // Button Information Start
-#define BUTTON_PIN 14 // Example pin for the button (change accordingly)
+#define BUTTON_PIN 22 // Example pin for the button (change accordingly)
 SemaphoreHandle_t xSemaphore;
 void buttonTask(void *pvParameters);
 void buttonISR();
@@ -46,10 +46,76 @@ void buttonISR();
 // MQTT Information Start
 #include <WiFi.h>
 #include <PubSubClient.h>
-const char* ssid = "Group_2";
-const char* password = "smartsys";
-const char* mqtt_server = "192.168.1.7";
-WiFiClient espClient;
+#include <WiFiClientSecure.h>
+
+const int mqtt_port = 8883;
+const char *mqtt_broker = "u88196e4.ala.us-east-1.emqxsl.com";
+const char *mqtt_topic = "emqx/esp32";
+const char *mqtt_username = "nialab";
+const char *mqtt_password = "pi4life";
+
+const char* ssid = "TP-Link_0A20";
+const char* password = "04550259";
+
+const char* ca_cert= \
+"-----BEGIN CERTIFICATE-----\n" \
+"MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh\n" \
+"MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n" \
+"d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBH\n" \
+"MjAeFw0xMzA4MDExMjAwMDBaFw0zODAxMTUxMjAwMDBaMGExCzAJBgNVBAYTAlVT\n" \
+"MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j\n" \
+"b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IEcyMIIBIjANBgkqhkiG\n" \
+"9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuzfNNNx7a8myaJCtSnX/RrohCgiN9RlUyfuI\n" \
+"2/Ou8jqJkTx65qsGGmvPrC3oXgkkRLpimn7Wo6h+4FR1IAWsULecYxpsMNzaHxmx\n" \
+"1x7e/dfgy5SDN67sH0NO3Xss0r0upS/kqbitOtSZpLYl6ZtrAGCSYP9PIUkY92eQ\n" \
+"q2EGnI/yuum06ZIya7XzV+hdG82MHauVBJVJ8zUtluNJbd134/tJS7SsVQepj5Wz\n" \
+"tCO7TG1F8PapspUwtP1MVYwnSlcUfIKdzXOS0xZKBgyMUNGPHgm+F6HmIcr9g+UQ\n" \
+"vIOlCsRnKPZzFBQ9RnbDhxSJITRNrw9FDKZJobq7nMWxM4MphQIDAQABo0IwQDAP\n" \
+"BgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNVHQ4EFgQUTiJUIBiV\n" \
+"5uNu5g/6+rkS7QYXjzkwDQYJKoZIhvcNAQELBQADggEBAGBnKJRvDkhj6zHd6mcY\n" \
+"1Yl9PMWLSn/pvtsrF9+wX3N3KjITOYFnQoQj8kVnNeyIv/iPsGEMNKSuIEyExtv4\n" \
+"NeF22d+mQrvHRAiGfzZ0JFrabA0UWTW98kndth/Jsw1HKj2ZL7tcu7XUIOGZX1NG\n" \
+"Fdtom/DzMNU+MeKNhJ7jitralj41E6Vf8PlwUHBHQRFXGU7Aj64GxJUTFy8bJZ91\n" \
+"8rGOmaFvE7FBcf6IKshPECBV1/MUReXgRPTqh5Uykw7+U0b6LJ3/iyK5S9kJRaTe\n" \
+"pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl\n" \
+"MrY=\n" \
+"-----END CERTIFICATE-----\n";
+
+const char* ca_cert= \
+"-----BEGIN CERTIFICATE-----\n" \
+"MIIEqjCCA5KgAwIBAgIQAnmsRYvBskWr+YBTzSybsTANBgkqhkiG9w0BAQsFADBh\n" \
+"MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3\n" \
+"d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD\n" \
+"QTAeFw0xNzExMjcxMjQ2MTBaFw0yNzExMjcxMjQ2MTBaMG4xCzAJBgNVBAYTAlVT\n" \
+"MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j\n" \
+"b20xLTArBgNVBAMTJEVuY3J5cHRpb24gRXZlcnl3aGVyZSBEViBUTFMgQ0EgLSBH\n" \
+"MTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALPeP6wkab41dyQh6mKc\n" \
+"oHqt3jRIxW5MDvf9QyiOR7VfFwK656es0UFiIb74N9pRntzF1UgYzDGu3ppZVMdo\n" \
+"lbxhm6dWS9OK/lFehKNT0OYI9aqk6F+U7cA6jxSC+iDBPXwdF4rs3KRyp3aQn6pj\n" \
+"pp1yr7IB6Y4zv72Ee/PlZ/6rK6InC6WpK0nPVOYR7n9iDuPe1E4IxUMBH/T33+3h\n" \
+"yuH3dvfgiWUOUkjdpMbyxX+XNle5uEIiyBsi4IvbcTCh8ruifCIi5mDXkZrnMT8n\n" \
+"wfYCV6v6kDdXkbgGRLKsR4pucbJtbKqIkUGxuZI2t7pfewKRc5nWecvDBZf3+p1M\n" \
+"pA8CAwEAAaOCAU8wggFLMB0GA1UdDgQWBBRVdE+yck/1YLpQ0dfmUVyaAYca1zAf\n" \
+"BgNVHSMEGDAWgBQD3lA1VtFMu2bwo+IbG8OXsj3RVTAOBgNVHQ8BAf8EBAMCAYYw\n" \
+"HQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMBIGA1UdEwEB/wQIMAYBAf8C\n" \
+"AQAwNAYIKwYBBQUHAQEEKDAmMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdp\n" \
+"Y2VydC5jb20wQgYDVR0fBDswOTA3oDWgM4YxaHR0cDovL2NybDMuZGlnaWNlcnQu\n" \
+"Y29tL0RpZ2lDZXJ0R2xvYmFsUm9vdENBLmNybDBMBgNVHSAERTBDMDcGCWCGSAGG\n" \
+"/WwBAjAqMCgGCCsGAQUFBwIBFhxodHRwczovL3d3dy5kaWdpY2VydC5jb20vQ1BT\n" \
+"MAgGBmeBDAECATANBgkqhkiG9w0BAQsFAAOCAQEAK3Gp6/aGq7aBZsxf/oQ+TD/B\n" \
+"SwW3AU4ETK+GQf2kFzYZkby5SFrHdPomunx2HBzViUchGoofGgg7gHW0W3MlQAXW\n" \
+"M0r5LUvStcr82QDWYNPaUy4taCQmyaJ+VB+6wxHstSigOlSNF2a6vg4rgexixeiV\n" \
+"4YSB03Yqp2t3TeZHM9ESfkus74nQyW7pRGezj+TC44xCagCQQOzzNmzEAP2SnCrJ\n" \
+"sNE2DpRVMnL8J6xBRdjmOsC3N6cQuKuRXbzByVBjCqAA8t1L0I+9wXJerLPyErjy\n" \
+"rMKWaBFLmfK/AHNF4ZihwPGOc7w6UHczBZXH5RFzJNnww+WnKuTPI0HfnVH8lg==\n" \
+"-----END CERTIFICATE-----\n";
+
+
+
+
+
+
+WiFiClientSecure espClient;
 PubSubClient client(espClient);
 // MQTT Information End
 
@@ -64,34 +130,51 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 #include <WiFiUdp.h>
 // Time END
 
-// MQTT and WIFI Start
-void initWiFi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi ..");
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.println(WiFi.status());
-    // Serial.print('.');
-    delay(1000);
-  }
-  Serial.println(WiFi.localIP());
-  state = S1;
+
+void setupWifiandMQTT() {
+    // Set software serial baud to 115200;
+    Serial.begin(115200);
+    // connecting to a WiFi network
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.println("Connecting to WiFi..");
+    }
+    Serial.println("Connected to the WiFi network");
+
+    // set root ca cert
+    espClient.setCACert(ca_cert);
+    // connecting to a mqtt broker
+    client.setServer(mqtt_broker, mqtt_port);
+    client.setCallback(callback);
+    while (!client.connected()) {
+        String client_id = "esp32-client-";
+        client_id += String(WiFi.macAddress());
+        Serial.printf("The client %s connects to the public mqtt broker\n", client_id.c_str());
+        if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+            Serial.println("Public emqx mqtt broker connected");
+            client.subscribe(mqtt_topic);
+        } else {
+            Serial.print("Failed to connect to MQTT broker, rc=");
+            Serial.print(client.state());
+            Serial.println("Retrying in 5 seconds.");
+            delay(5000);
+        }
+    }
+    // publish message
+    client.publish(mqtt_topic, "Hi EMQX I'm ESP32 ^^");
 }
 
-void setupMQTT() {
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);  // Set your callback function for incoming messages
-  subscribeToTopic("INIT/IN");  // Replace "your-topic" with the actual topic you want to subscribe to
-  subscribeToTopic("CONFIG");
-  subscribeToTopic("STATUS/OUT");
-
-}
-
+// updated on dec 18th
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message received on topic: ");
-  Serial.println(topic);
-  payload[length] = '\0';  // Ensure null termination
-  parseCallback(payload);
+    Serial.print("Message arrived in topic: ");
+    Serial.println(topic);
+    Serial.print("Message:");
+    for (int i = 0; i < length; i++) {
+        Serial.print((char) payload[i]);
+    }
+    Serial.println();
+    Serial.println("-----------------------");
 }
 
 void getCurrentEpochTimeString(char* result) {
@@ -232,8 +315,7 @@ void setup() {
 
   // Wifi Setup Start
   Serial.println("Starting Wifi Setup");
-  initWiFi();
-  setupMQTT();
+  setupWifiandMQTT();
   // Wifi Setup End
 
   // Free RTOS Tasks Start
@@ -279,25 +361,28 @@ void loop() {
   delay(100);
 }
 
+
+// Not called as of dec 18th
 void subscribeToTopic(const char* topic) {
   client.subscribe(topic);
   Serial.print("Subscribed to topic: ");
   Serial.println(topic);
 }
 
+// Updated Dec 18th
 void reconnect() {
   while (!client.connected()) {
-    Serial.println("Connecting to MQTT Broker...");
-    if (client.connect("ESP32Client")) {
-      Serial.println("Connected to MQTT Broker");
-      subscribeToTopic("INIT/IN");  // Replace "your-topic" with the actual topic you want to subscribe to
-      subscribeToTopic("CONFIG");  // Replace "your-topic" with the actual topic you want to subscribe to
-      subscribeToTopic("STATUS/OUT");
-
+    Serial.println("Reconnecting to MQTT broker...");
+    String client_id = "esp8266-client-";
+    client_id += String(WiFi.macAddress());
+    if (client.connect(client_id.c_str(), mqtt_username, mqtt_password)) {
+        Serial.println("Reconnected to MQTT broker.");
+        client.subscribe(mqtt_topic);
     } else {
-      Serial.print("Failed with error code: ");
-      Serial.println(client.state());
-      delay(2000);
+        Serial.print("Failed to reconnect to MQTT broker, rc=");
+        Serial.print(client.state());
+        Serial.println("Retrying in 5 seconds.");
+        delay(5000);
     }
   }
 }

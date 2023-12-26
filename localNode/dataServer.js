@@ -1,7 +1,7 @@
 const mqtt = require('mqtt');
 
 // MQTT broker connection options
-const brokerUrl = 'http://192.168.1.7'; // Replace with your broker URL
+const brokerUrl = 'http://192.168.0.101'; // Replace with your broker URL
 const options = {
   clientId: 'mqtt-receiver',
 };
@@ -86,7 +86,7 @@ async function addData(DeviceID, Time, Temperature, Humidity) {
     redirect: 'follow'
   };
 
-  fetch("http://192.168.1.23:3004/UpdateDeviceData?labApi=nialab", requestOptions)
+  fetch("http://192.168.0.100:3004/UpdateDeviceData?labApi=nialab", requestOptions)
     .then(response => response.text())
     .then(result => console.log(result))
     .catch(error => console.log('error', error));

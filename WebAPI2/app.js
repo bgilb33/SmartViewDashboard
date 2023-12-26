@@ -8,7 +8,7 @@ const sendConfigData = require('./ConfigSender');
 let database; // Define the database variable
 
 app.use(cors({
-  origin: '*',
+  origin: 'http://localhost:4200/login',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,
@@ -23,6 +23,7 @@ app.get('/', (req, res) => {
   res.send('LabSensors API is Active');
 });
 
+// Finish
 // General Finder
 app.get('/login', async (req, res) => {
   const nameOfLab = req.query.labName;

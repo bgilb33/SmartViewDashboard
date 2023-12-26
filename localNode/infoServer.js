@@ -3,7 +3,7 @@ const mqtt = require('mqtt');
 // topic: INIT/IN SETUP 0C:DC:7E:CB:6C:D0 1 10 Minute
 
 // MQTT broker connection options
-const brokerUrl = 'mqtt://192.168.1.7'; // Replace with your broker URL
+const brokerUrl = 'mqtt://192.168.0.101'; // Replace with your broker URL
 const options = {
   clientId: 'mqtt-sender',
 };
@@ -70,7 +70,7 @@ async function ReturnIDAndString(deviceIP, deviceMac) {
   };
 
   // const response = await fetch("http://192.168.1.23:3004/AddDevice?labApi=nialab", requestOptions);
-  const response = await fetch("http://192.168.1.23:3004/AddDevice?labApi=nialab", requestOptions);
+  const response = await fetch("http://192.168.0.100:3004/AddDevice?labApi=nialab", requestOptions);
   const data = await response.json();
   const { DeviceID, Frequency, Units } = await data;
   var returnString = await createString(deviceMac, DeviceID, Frequency, Units);
