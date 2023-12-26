@@ -60,8 +60,9 @@ export class AuthService {
       .toPromise()
       .then((response: any) => {
         if (response.success) {
+          console.log(response);
           this.isAuthenticated = true;
-          this.labApi = response.data.api;
+          this.labApi = response.api;
           return true;
         } else {
           this.isAuthenticated = false;
