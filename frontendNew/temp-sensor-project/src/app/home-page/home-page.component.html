@@ -4,7 +4,7 @@
   <h1 class="devices-active">Devices Active: {{ tempSensors.length }}</h1>
 </div>
 <div class="sensor-wrapper">
-  <div *ngFor="let sensor of tempSensors" class="sensor-container">
+  <div *ngFor="let sensor of tempSensors" class="sensor-container" (click) = openGraphModal(sensor)>
     <div class="sensor-info">
       <h2>Name: {{ sensor.DeviceName }}</h2>
       <p>Temperature: {{ sensor.Temperature }}&deg;C</p>
@@ -15,3 +15,11 @@
     </div>
   </div>
 </div>
+
+<ng-template #graphModal let-c="close" let-d="dismiss">
+  <app-graph-modal
+      [selectedSensor]="selectedSensor"
+      [labApi] = "labApi"
+      (closeModalEvent)="closeModal()"
+  ></app-graph-modal>
+</ng-template>

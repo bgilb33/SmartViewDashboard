@@ -19,6 +19,7 @@ import { DeleteDeviceModalComponent } from './delete-device-modal/delete-device-
 import { AddAlarmModalComponent } from './add-alarm-modal/add-alarm-modal.component';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CorsInterceptor } from './http-interceptor';
+import { GraphModalComponent } from './graph-modal/graph-modal.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,8 @@ import { CorsInterceptor } from './http-interceptor';
     AlarmComponent,
     EditAlarmModalComponent,
     DeleteDeviceModalComponent,
-    AddAlarmModalComponent
+    AddAlarmModalComponent,
+    GraphModalComponent
   ],
   imports: [
     BrowserModule,

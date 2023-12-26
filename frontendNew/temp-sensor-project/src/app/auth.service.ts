@@ -2,14 +2,19 @@
 // trying spark a deploy
 
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import axios from 'axios';
-
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+
+  private getHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+  }
+
   // Use localStorage to store authentication status
   get isAuthenticated(): boolean {
     return localStorage.getItem('isAuthenticated') === 'true';
@@ -35,29 +40,37 @@ export class AuthService {
     return this.isAuthenticated;
   }
 
+  // API call for user login
+  async login(username: string, password: string): Promise<boolean> {
+    const loginUrl = 'http://localhost:8888/.netlify/functions/login';
 
+    // No need to hash on the frontend
 
-  login(username: string, password: string): Promise<boolean> {
-    const loginUrl = 'https://labsensorfunctions.netlify.app/.netlify/functions/hello-world'; // Adjust the URL based on your API endpoint
+    // Create headers with content type
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-    // Make an API call to authenticate the user
-    return axios
-      .get(loginUrl)
+    // Prepare the request body
+    const requestBody = {
+      labName: username,
+      labPassword: password, // Send the plaintext password to the server
+    };
+
+    return this.http
+      .post(loginUrl, requestBody, { headers: this.getHeaders() })
+      .toPromise()
       .then((response: any) => {
-        if (response.data.success) {
-          // Set isAuthenticated to true upon successful login
+        if (response.success) {
+          console.log(response);
           this.isAuthenticated = true;
-          this.labApi = response.data.api;
+          this.labApi = response.api;
           return true;
         } else {
-          // Clear isAuthenticated on failed login
           this.isAuthenticated = false;
           return false;
         }
       })
       .catch((error) => {
         console.error('Error during login:', error);
-        // Clear isAuthenticated on error
         this.isAuthenticated = false;
         return false;
       });
