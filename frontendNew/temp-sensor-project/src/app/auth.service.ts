@@ -1,4 +1,5 @@
 // auth.service.ts
+// trying spark a deploy
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -60,7 +61,7 @@ export class AuthService {
       .then((response: any) => {
         if (response.success) {
           this.isAuthenticated = true;
-          this.labApi = response.api;
+          this.labApi = response.data.api;
           return true;
         } else {
           this.isAuthenticated = false;
@@ -73,7 +74,6 @@ export class AuthService {
         return false;
       });
   }
-
   // Simulate user logout
   logout(): void {
     // Clear authentication status on logout

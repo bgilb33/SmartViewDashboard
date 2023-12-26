@@ -8,7 +8,7 @@ const sendConfigData = require('./ConfigSender');
 let database; // Define the database variable
 
 app.use(cors({
-  origin: 'http://localhost:4200',
+  origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204,

@@ -12,8 +12,8 @@ In the end we hope to build a well integrated IoT monitoring system that will al
 ### Project Structure:
 Below is a picture of the system outline. The red box indicates the initial prototype that we will build. After building the initial proof of concept, we will expand the system to include all the features found below.
 
-![UserExperience.](./Images/UserExperience.jpg)
+![UserExperience.](./etcFiles/Images/UserExperience.jpg)
 
 Below is a diagram of the backend of our system. The project's main compoents include a ESP32 microcontrollers and a raspberry pi. The raspberry pi will host a number of scripts including the MQTT broker, the database, and the API to request the sensor data.
 
-![Backround](./Images/BackendStructure.JPG)
+![Backround](./etcFiles/Images/BackendStructure.JPG)
