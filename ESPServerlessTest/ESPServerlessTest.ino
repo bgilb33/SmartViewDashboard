@@ -3,8 +3,8 @@
 #include <WiFiClientSecure.h>
 
 // WiFi
-const char *ssid = "NETGEAR94";
-const char *password = "tinysea030";
+const char *ssid = "R Home2";
+const char *password = "B@hnBohn0905";
 
 // MQTT Broker
 const int mqtt_port = 8883;
