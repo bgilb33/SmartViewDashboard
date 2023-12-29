@@ -26,7 +26,7 @@ const client = mqtt.connect(connectUrl, {
 // (6) <lab>/STATUS/IN <deviceID>
 
 // (1) nialab/INIT/OUT 
-const initMessage = "SETUP 192.168.9.1 0C:DC:7E:CB:6C:D0";
+const initMessage = "192.168.9.1 0C:DC:7E:CB:6C:D0";
 // (2) nialab/DATA 
 const dataPoint = "3 1703704262 97 23"
 // (6) nialab/STATUS/IN 
