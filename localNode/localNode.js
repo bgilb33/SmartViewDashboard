@@ -114,7 +114,8 @@ client.on('message', async (topic, payload) => {
   if(returnInfo[1] == topicPart[1]){
     console.log("DATA message detected");
 
-    if(true){
+    // debug statement
+    if(false){
       console.log(`Intercepted: ${payload.toString()} but in debug mode so not sending a call to the API`);
     }
     else {
@@ -124,8 +125,14 @@ client.on('message', async (topic, payload) => {
       const Humidity = dataMessageInfo[3];
       const Time = dataMessageInfo[1];
   
-      const result = await addDeviceDataAPI(incomingLab, DeviceID, Temperature, Humidity, Time)
-      console.log("Status:", result.status);
+      const resultRecent = await updateRecentDeviceData(incomingLab, DeviceID, Temperature, Humidity, Time)
+      const resultHistorical = await updateHistoricalDeviceData(incomingLab, DeviceID, Temperature, Humidity, Time)
+      const resultAlarm = await checkDeviceAlarmStatus(incomingLab, DeviceID, Temperature, Humidity, Time)
+
+      console.log("Recent Sataus:", resultRecent.status);
+      console.log("Historical Status:", resultHistorical.status);
+      console.log("Alarm Check Status:", resultAlarm.status);
+
     }
     console.log("")
   }
@@ -185,8 +192,8 @@ async function addDeviceAPI(labName, IP, MAC) {
   }
 }
 
-
-async function addDeviceDataAPI(labName, DeviceID, Temperature, Humidity, Time) {
+// This function will add data to the most recent data table
+async function updateRecentDeviceData(labName, DeviceID, Temperature, Humidity, Time) {
   var myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
 
@@ -194,7 +201,7 @@ async function addDeviceDataAPI(labName, DeviceID, Temperature, Humidity, Time) 
     "DeviceID": parseInt(DeviceID),
     "Temperature": parseInt(Temperature),
     "Humidity": parseInt(Humidity),
-    "Time": Time
+    "Time": parseInt(Time)
   });
 
   var requestOptions = {
@@ -204,7 +211,75 @@ async function addDeviceDataAPI(labName, DeviceID, Temperature, Humidity, Time) 
     redirect: 'follow'
   };
 
-  const functionString = baseURL + "updateDeviceData?labApi=" + labName;
+  const functionString = baseURL + "updateRecentDeviceData?labApi=" + labName;
+
+  try {
+    const response = await fetch(functionString, requestOptions);
+    const status = response.status;
+    const returnResponse = await response.text();
+    
+    // Return an object containing status and response text
+    return { status: status, response: returnResponse };
+  } catch (error) {
+    console.error('Error in addDeviceAPI:', error);
+    throw error; // Rethrow the error to let the caller handle it
+  }
+}
+
+// This function will add data to the historical data collection
+async function updateHistoricalDeviceData(labName, DeviceID, Temperature, Humidity, Time) {
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  var raw = JSON.stringify({
+    "DeviceID": parseInt(DeviceID),
+    "Temperature": parseInt(Temperature),
+    "Humidity": parseInt(Humidity),
+    "Time": parseInt(Time)
+  });
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  const functionString = baseURL + "updateHistoricalDeviceData?labApi=" + labName;
+
+  try {
+    const response = await fetch(functionString, requestOptions);
+    const status = response.status;
+    const returnResponse = await response.text();
+    
+    // Return an object containing status and response text
+    return { status: status, response: returnResponse };
+  } catch (error) {
+    console.error('Error in addDeviceAPI:', error);
+    throw error; // Rethrow the error to let the caller handle it
+  }
+}
+
+// This function will check the current alarms
+async function checkDeviceAlarmStatus(labName, DeviceID, Temperature, Humidity, Time) {
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  var raw = JSON.stringify({
+    "DeviceID": parseInt(DeviceID),
+    "Temperature": parseInt(Temperature),
+    "Humidity": parseInt(Humidity),
+    "Time": parseInt(Time)
+  });
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  const functionString = baseURL + "checkDeviceAlarmStatus?labApi=" + labName;
 
   try {
     const response = await fetch(functionString, requestOptions);
