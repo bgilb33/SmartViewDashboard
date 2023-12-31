@@ -29,6 +29,8 @@ int deviceID = 0;
 int inProcess = 0;
 volatile float periord = 100; // default
 
+bool periordChanged = false;
+
 #define SEC 1000
 #define MIN 60000
 #define HOUR 3600000
@@ -56,8 +58,8 @@ void buttonISR();
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <WiFiClientSecure.h>
-const char *ssid = "R Home2";
-const char *password = "B@hnBohn0905";
+const char *ssid = "MySpectrumWiFi5B-2G";
+const char *password = "urbanfamous507";
 
 
 // MQTT Broker
@@ -206,7 +208,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message received on topic: ");
   Serial.println(topic);
   payload[length] = '\0';  // Ensure null termination
-  parseCallback(payload);
+  parseCallback(topic,payload);
 }
 
 
@@ -332,51 +334,36 @@ void loop() {
   delay(100);
 }
 
-// Parsing Function to recieve messages
-void parseCallback(byte* payload){
 
-    char* action = strtok((char*)payload, " ");
-    if (strcmp(action, "STATUS") == 0){
-      char stringDeviceID[10];  // Adjust the size based on the expected length of the integer
-      itoa(deviceID, stringDeviceID, 10);
+// This is a helper function for parseCallback. This will parse the topic edit the incoming lab and topic action
+void parseTopic(char * incomingLab, char * topicAction, char* topic){
 
-      randomSeed(analogRead(0));
-      float randomFloat = map(random(10000), 0, 10000, 0.0, 3000.0);
-      vTaskDelay(randomFloat / portTICK_PERIOD_MS); // Delay for 1000ms
+    char *separator = strchr(topic, '/');
+    int separatorIndex = separator - topic;
 
-      char returnString[30];
-      strcpy(returnString, stringDeviceID);
+    strncpy(incomingLab, topic, separatorIndex);
+    strncpy(topicAction, separator, 15);
+}
 
-      if(deviceID == 0){
-        strcat(returnString," 0");
-      }
-      if(deviceID != 0){
-        strcat(returnString," 1");
-      }
-      Serial.print("Returning Status: ");
-      Serial.println(returnString);
+void parseCallback(char* topic, byte* payload){
+  Serial.println("This is a work in progress");
+  char incomingLab[25] = "";
+  char topicAction[25] = "";
 
-      sendMQTT("STATUS/IN", returnString);
+  parseTopic(incomingLab, topicAction, topic);
 
-    // Message has been sent on the EDIT topic
-    }else if (strcmp(action, "EDIT") == 0){
-      int localDeviceID = atoi(strtok(NULL, " "));
+  Serial.print("Incoming Lab: ");
+  Serial.println(incomingLab);
+  Serial.print("Incoming topic Action: ");
+  Serial.println(topicAction);
 
-      // If this is the correct device, configure the data
-      if(localDeviceID == deviceID){
-        char* frequency = strtok(NULL, " ");
-        char* units = strtok(NULL, " ");
+  if(strcmp(incomingLab, labName) == 1){
+    Serial.println("ERROR, this is the incorrect Lab");
+  }
+  else{
+    Serial.println("This is the correct lab, we shall proceed");
 
-        Serial.print("Periord has been changed from: ");
-        Serial.print(periord);
-        periord = CalcPeriord(atof(frequency), (units));
-        delay(30);
-        Serial.print(" -> ");
-        Serial.println(periord);
-      }else{Serial.println("Wrong Device");}
-
-    // Message sent on the SETUP topic
-    }else if (strcmp(action, "SETUP") == 0){
+    if(strcmp(topicAction, "/INIT/IN") == 0){
       Serial.println("Setup Detected");
       char* recievedMacAddress;
       char* recievedDeviceID;
@@ -385,12 +372,10 @@ void parseCallback(byte* payload){
       int frequency = 0;
       char* units;
 
-      recievedMacAddress = strtok(NULL, " ");
-
+      recievedMacAddress = strtok((char*)payload, " ");
       Serial.print("I think the macAddress is: ");
       Serial.println(recievedMacAddress);
 
-      // Check if this is the correct device
       if (strcmp(recievedMacAddress, formattedMac) == 0){
         Serial.println("Formatting New Parameters");
 
@@ -410,12 +395,66 @@ void parseCallback(byte* payload){
         // Change State Parameters
         state = S3;
       }
-      else{Serial.println("Device ID Intercepted, Incorrect Device");}
+      else{Serial.println("Incorret Device");}
     }
-    else{Serial.println("Something Strange");}
-    inProcess = 0;
-}
 
+    if(strcmp(topicAction, "/CONFIG") == 0){
+      int localDeviceID = atoi(strtok((char*)payload, " "));
+
+      // If this is the correct device, configure the data
+      if(localDeviceID == deviceID){
+        char* frequency = strtok(NULL, " ");
+        char* units = strtok(NULL, " ");
+
+        periordChanged = true;
+
+        Serial.print("Periord has been changed from: ");
+        Serial.print(periord);
+
+        periord = CalcPeriord(atof(frequency), (units));
+
+        vTaskDelay(30 / portTICK_PERIOD_MS); // Delay for 30ms
+        
+        Serial.print(" -> ");
+        Serial.println(periord);
+      }else{Serial.println("Wrong Device");}
+    }
+    
+    if(strcmp(topicAction, "/STATUS/OUT") == 0){
+      char stringDeviceID[10];  // Adjust the size based on the expected length of the integer
+      itoa(deviceID, stringDeviceID, 10);
+
+      randomSeed(analogRead(0));
+      float randomFloat = map(random(10000), 0, 10000, 0.0, 3000.0);
+      vTaskDelay(randomFloat / portTICK_PERIOD_MS); // Delay for random
+
+      char returnString[30];
+      strcpy(returnString, stringDeviceID);
+
+      Serial.print("Returning Status: ");
+      Serial.println(returnString);
+
+      char returnTopic[20] = "";
+
+      strcpy(returnTopic, labName);
+      strcat(returnTopic, "/STATUS/IN");
+
+      sendMQTT(returnTopic, returnString);
+    }
+  }
+
+
+
+
+  // check to see if the lab is the correct lab
+  // check to see the type of topic
+
+  // if it is init in
+
+  // if it is config
+
+  // if it is status out
+}
 
 
 // Task 1 function
@@ -477,11 +516,28 @@ void SampleSensor(void *pvParameters) {
       
       char message[50];
       createDataString(message, deviceID, epochTimeString ,temperature, humidity);
-      sendMQTT("DATA", message);
+
+      
+      char returnTopic[20] = "";
+
+      strcpy(returnTopic, labName);
+      strcat(returnTopic, "/DATA");
+
+      sendMQTT(returnTopic, message);
       //Serial.println(message);
 
-
-      vTaskDelay(periord / portTICK_PERIOD_MS); // frequency goes here
+      for (int i = 0; i < periord; i++)
+      {
+        if(!periordChanged){
+          vTaskDelay(1 / portTICK_PERIOD_MS);
+        }
+        else{
+          Serial.println("The periord has changed");
+          periordChanged = false;
+          break;
+        }
+        
+      }      
     }else{
       vTaskDelay(500 / portTICK_PERIOD_MS); // Delay for 2000ms
     }
@@ -520,13 +576,9 @@ void buttonTask(void *pvParameters) {
         strcpy(returnWithLab, labName);
         strcat(returnWithLab, topic);
 
-        strcpy(result, "SETUP");
-        strcat(result, " ");
-        strcat(result, formattedIP);
+        strcpy(result, formattedIP);
         strcat(result, " ");
         strcat(result, formattedMac);
-
-        // TO BE ADDED CALL MQTT COMMAND
 
         Serial.println(returnWithLab);
         Serial.println(result);
