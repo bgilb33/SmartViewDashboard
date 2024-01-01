@@ -86,7 +86,7 @@ export class AlarmComponent implements OnInit, OnDestroy {
       }
     );
 
-    this.apiService.getAllConfig(this.labApi).subscribe(
+    this.apiService.getHomePageData(this.labApi).subscribe(
       (response) => {
         if (response.success) {
           for (let config of response.data) {

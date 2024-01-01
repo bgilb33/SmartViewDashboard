@@ -5,11 +5,17 @@
     <h1>Available Devices:</h1>
 </div>
 <div class="config-container">
-    <div *ngFor="let sensor of tempSensors" class="device-container">
+    <div *ngFor="let sensor of tempSensors" class="device-container"
+    [ngStyle]="{'background-color': sensor.Status === 'Offline' ? '#eee' : 'white'}">
         <div class="device-info">
             <h2>Name: {{ sensor.DeviceName }}</h2>
             <p>Sample Frequency: {{ sensor.Frequency }}</p>
             <p>Sample Units: {{ sensor.Units}}</p>
+            <p>Status: 
+                <span  [ngStyle]="{'color': sensor.Status === 'Offline' ? '#ff0000' : '#33cc33'}">
+                  {{ sensor.Status}}
+                </span>
+            </p>
         </div>
         <div class="device-actions">
             <button class="edit-button" (click)="editDevice(sensor)">Edit</button>

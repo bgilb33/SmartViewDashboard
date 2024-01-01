@@ -29,14 +29,14 @@ export class DeviceConfigComponent {
     this.labApi = this.authService.labApi;
 
     // Fetch data using labApi
-    this.apiService.getAllConfig(this.labApi).subscribe(
+    this.apiService.getHomePageData(this.labApi).subscribe(
       (response) => {
         if (response.success) {
           this.tempSensors = response.data;
         }
       },
       (error) => {
-        console.error('Error fetching config data:', error);
+        console.error('Error fetching home page data:', error);
       }
     );
   }

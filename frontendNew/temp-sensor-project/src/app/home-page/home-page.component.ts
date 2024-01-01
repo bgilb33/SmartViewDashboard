@@ -74,6 +74,19 @@ export class HomePageComponent implements OnInit, OnDestroy {
     );
   }
 
+  refreshData(): void {
+    this.apiService.sendDeviceRefresh(this.labApi).subscribe(
+      (response) => {
+        if (response.success) {
+          console.log("Refreshing Devices...");
+        }
+      },
+      (error) => {
+        console.error('Error sending refresh:', error);
+      }
+    )
+  }
+
   openGraphModal(sensor: any): void {
     this.selectedSensor = { ...sensor };
     this.modalRef = this.modalService.open(GraphModalComponent, { centered: true, size: 'lg' });

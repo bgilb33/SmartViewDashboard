@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class ApiService {
-  // private apiUrl = 'http://localhost:8888/.netlify/functions'; // Update this with your actual API URL
   private apiUrl = 'https://labsensorapi.netlify.app/.netlify/functions'; // Update this with your actual API URL
 
 
@@ -26,7 +25,7 @@ export class ApiService {
     return this.http.get(url, { params, headers: this.getHeaders() });
   }
 
-  // Add methods for other API endpoints as needed
+  // OUTDATED, use getHomePageData instead
   getAllConfig(labApi: string): Observable<any> {
     const url = `${this.apiUrl}/getAllConfigData`;
     const params = { labApi };
@@ -85,5 +84,10 @@ export class ApiService {
     const url = `${this.apiUrl}/removeAlarm?labApi=${labApi}&alarmID=${alarmID}`;
     
     return this.http.delete(url, { headers: this.getHeaders() });
+  }
+
+  sendDeviceRefresh(labApi: string): Observable<any> {
+    const url = `${this.apiUrl}/sendDeviceRefresh?labApi=${labApi}`;
+    return this.http.get(url, { headers: this.getHeaders() });
   }
 }

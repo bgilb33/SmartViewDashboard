@@ -1,12 +1,33 @@
 /* home-page.component.css */
 
 .lab-header {
-    position: relative;
-    display: flex;
-    gap: 20%;
-    justify-content: center;
-    margin: 40px;
-  }
+  position: relative;
+  max-width: 75%;
+  margin: 40px auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.refresh-button {
+  background-color: #eee;
+  color: #369;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.refresh-button i {
+  margin-right: 5px; /* Space between icon and text */
+}
+
+.refresh-button:hover {
+  color: white;
+  background-color: black; /* Darker green on hover */
+}
   
   .sensor-wrapper {
     margin: 50px;
