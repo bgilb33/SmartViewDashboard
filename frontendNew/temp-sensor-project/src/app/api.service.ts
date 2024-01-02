@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class ApiService {
-  private apiUrl = 'https://labsensorapi.netlify.app/.netlify/functions'; // Update this with your actual API URL
+  private apiUrl = 'https://smartviewapi.netlify.app/.netlify/functions'; // Update this with your actual API URL
 
 
   constructor(private http: HttpClient) {}

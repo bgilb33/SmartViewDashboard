@@ -23,7 +23,7 @@ const client = mqtt.connect(connectUrl, {
 const labName = ['nialab', 'anotherlab'];
 const topicPart = ['/INIT/OUT', '/DATA', '/STATUS/IN', '/CONFIG'];
 
-const baseURL = "https://labsensorapi.netlify.app/.netlify/functions/"
+const baseURL = "https://smartviewapi.netlify.app/.netlify/functions/"
 
 const topics = [];
 
@@ -177,7 +177,7 @@ async function addDeviceAPI(labName, IP, MAC) {
     redirect: 'follow'
   };
 
-  const functionString = "https://labsensorapi.netlify.app/.netlify/functions/addDevice?labApi=" + labName;
+  const functionString = "https://smartviewapi.netlify.app/.netlify/functions/addDevice?labApi=" + labName;
 
   try {
     const response = await fetch(functionString, requestOptions);
