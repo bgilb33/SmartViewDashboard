@@ -11,7 +11,7 @@
 
 .refresh-button {
   background-color: #eee;
-  color: #25A1B0;
+  color: #369;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -30,8 +30,7 @@
 }
   
   .sensor-wrapper {
-    margin-top: 50px;
-    margin-left: 100px;
+    margin: 50px;
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
@@ -40,7 +39,7 @@
   .sensor-container {
     border: 1px solid #ccc;
     border-radius: 10px;
-    width: 310px;
+    width: 300px;
     padding: 20px;
     background-color: #f9f9f9;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
